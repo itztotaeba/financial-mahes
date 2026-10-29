@@ -7,7 +7,7 @@
  */
 import { create } from "zustand";
 import type { Transaction } from "@/types";
-import { localStorageHelpers, generateDummyData } from "@/lib/storage";
+import { localStorageHelpers } from "@/lib/storage";
 import { toSupabasePayload, fromSupabaseRow, isUuid, isSupabaseConfigured } from "@/lib/supabase";
 import { generateId } from "@/lib/utils";
 
@@ -108,16 +108,9 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
 
   hydrate: async () => {
     if (get().hydrated) return;
-    const stored = localStorageHelpers.load();
-    // Penanda "sengaja kosong" (user menghapus data / pull cloud kosong):
-    // jangan bangunkan dummy lagi agar placeholder tidak muncul kembali.
-    const intentionallyEmpty = localStorageHelpers.isIntentionallyEmpty();
-    let data = stored;
-    if (stored.length === 0 && !intentionallyEmpty) {
-      // Pengguna baru tanpa data -> isi dummy data agar dashboard hidup.
-      data = generateDummyData();
-      localStorageHelpers.save(data);
-    }
+    // Local-first murni: apa adanya di localStorage — TIDAK ada dummy data.
+    // User baru disambut empty-state dengan ajakan onboarding (lihat Dashboard).
+    const data = localStorageHelpers.load();
     set({ transactions: data, hydrated: true });
     // Cek sesi Supabase yang tersimpan (tanpa reload halaman).
     await get().checkSession();
@@ -229,9 +222,30 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
     const sb = await getSupabase();
     const { data, error } = await sb.auth.signInWithPassword({ email, password });
     if (error) return { error: translateAuthError(error.message), hasLocalData: false };
-    const hasLocalData = get().transactions.length > 0;
     set({ userId: data.user?.id ?? null, email: data.user?.email ?? null, userLoaded: true });
-    return { hasLocalData };
+
+    // ===== Cloud-first =====
+    // Setelah login, SELALU tarik data akun dari Supabase dan jadikan sumber
+    // tampilan (sekaligus cache lokal). Tidak ada lagi prompt "upload dummy".
+    try {
+      const { data: rows, error: selErr } = await sb
+        .from("transactions")
+        .select("*")
+        .order("date", { ascending: false });
+      if (selErr) throw selErr;
+      const cloud = (rows ?? []).map((r) => fromSupabaseRow(r as Record<string, unknown>));
+      localStorageHelpers.save(cloud);
+      if (cloud.length === 0) localStorageHelpers.markIntentionallyEmpty();
+      else localStorageHelpers.clearIntentionallyEmpty();
+      set({ transactions: cloud, pushPending: false });
+    } catch {
+      /* gagal tarik cloud -> tetap tampilkan data lokal, sync manual via Pengaturan */
+    }
+
+    // `hasLocalData` kini berarti: masih ada transaksi lokal yang TIDAK ada di
+    // cloud (mis. dicatat offline sebelum login) -> UI boleh menawarkan upload.
+    const localOnly = get().transactions.filter((t) => !isUuid(t.id)).length > 0;
+    return { hasLocalData: localOnly };
   },
 
   signup: async (email, password) => {
@@ -245,8 +259,12 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
         hasLocalData: false,
       };
     }
-    const hasLocalData = get().transactions.length > 0;
     set({ userId: data.user.id, email: data.user.email ?? null, userLoaded: true });
+
+    // Akun baru: cloud pasti kosong -> mulai bersih (tanpa dummy).
+    // Jika user sudah sempat mencatat secara lokal, tawarkan upload sekali saja.
+    const hasLocalData = get().transactions.length > 0;
+    if (!hasLocalData) localStorageHelpers.markIntentionallyEmpty();
     return { hasLocalData };
   },
 

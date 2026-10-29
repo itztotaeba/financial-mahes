@@ -17,6 +17,7 @@ import {
 import { Header } from "@/components/layout/Header";
 import { openMobileMenu } from "@/lib/menu";
 import { Card } from "@/components/ui/primitives";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { useFinanceStore } from "@/store/useFinanceStore";
 import { CATEGORY_MAP } from "@/types";
 import { formatIDR, formatIDRCompact } from "@/lib/utils";
@@ -72,6 +73,19 @@ export default function LaporanPage() {
         </div>
       ) : (
         <div className="space-y-4 pb-20 lg:pb-4">
+          {/* Laporan butuh data — tampilkan onboarding bila masih kosong */}
+          {transactions.length === 0 && (
+            <Card>
+              <EmptyState
+                icon={<span aria-hidden>📈</span>}
+                title="Laporan menanti datamu"
+                description="Setelah beberapa transaksi tercatat, analisa bulanan dan rekap kategori akan muncul di sini secara otomatis."
+                actionLabel="Mulai Mencatat"
+                onAction={() => window.openTransactionModal?.()}
+              />
+            </Card>
+          )}
+
           {/* Tren bulanan */}
           <Card>
             <h2 className="text-base font-bold text-[#151516]">Tren Bulanan</h2>

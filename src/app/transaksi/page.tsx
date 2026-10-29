@@ -9,6 +9,7 @@ import { Header } from "@/components/layout/Header";
 import { openMobileMenu } from "@/lib/menu";
 import { Card, Button, Input } from "@/components/ui/primitives";
 import { TransactionItem } from "@/components/transaction/TransactionItem";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { useFinanceStore } from "@/store/useFinanceStore";
 import { CATEGORY_MAP } from "@/types";
 import { cn, formatIDR } from "@/lib/utils";
@@ -136,9 +137,21 @@ export default function TransaksiPage() {
           {/* Daftar transaksi */}
           <Card>
             {filtered.length === 0 ? (
-              <p className="py-12 text-center text-sm text-black/40">
-                Tidak ada transaksi yang cocok dengan filter.
-              </p>
+              transactions.length === 0 ? (
+                // User benar-benar baru: sambut dengan onboarding.
+                <EmptyState
+                  icon={<span aria-hidden>✍️</span>}
+                  title="Halaman masih kosong"
+                  description="Mulai tulis ceritamu hari ini. Satu catatan pengeluaran atau pemasukan sudah cukup untuk menghidupkan dashboard-mu."
+                  actionLabel="Tambah Transaksi"
+                  onAction={() => window.openTransactionModal?.()}
+                />
+              ) : (
+                // Ada data, tapi tidak cocok dengan filter aktif.
+                <p className="py-12 text-center text-sm text-black/40">
+                  Tidak ada transaksi yang cocok dengan filter.
+                </p>
+              )
             ) : (
               <ul className="divide-y divide-black/5">
                 {filtered.map((tx) => (
