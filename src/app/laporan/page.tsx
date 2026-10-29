@@ -15,6 +15,7 @@ import {
   Legend,
 } from "recharts";
 import { Header } from "@/components/layout/Header";
+import { openMobileMenu } from "@/lib/menu";
 import { Card } from "@/components/ui/primitives";
 import { useFinanceStore } from "@/store/useFinanceStore";
 import { CATEGORY_MAP } from "@/types";
@@ -60,11 +61,10 @@ export default function LaporanPage() {
       .sort((a, b) => b.expense + b.income - (a.expense + a.income));
   }, [transactions]);
 
-  const openMenu = () => window.dispatchEvent(new Event("mahes:open-menu"));
 
   return (
     <>
-      <Header title="Laporan" subtitle="Analisa bulanan & perilaku belanja" onMenuClick={openMenu} />
+      <Header title="Laporan" subtitle="Analisa bulanan & perilaku belanja" onMenuClick={openMobileMenu} />
 
       {!hydrated ? (
         <div className="grid min-h-[50vh] place-items-center text-sm text-black/40">

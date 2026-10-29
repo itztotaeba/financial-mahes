@@ -8,6 +8,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { CloudUpload, CloudDownload, RotateCcw, Trash2, Database, WifiOff } from "lucide-react";
 import { Header } from "@/components/layout/Header";
+import { openMobileMenu } from "@/lib/menu";
 import { Card, Button } from "@/components/ui/primitives";
 import { useFinanceStore } from "@/store/useFinanceStore";
 import { localStorageHelpers, generateDummyData } from "@/lib/storage";
@@ -50,11 +51,10 @@ export default function PengaturanPage() {
     flash("Data contoh dimuat ulang.");
   };
 
-  const openMenu = () => window.dispatchEvent(new Event("mahes:open-menu"));
 
   return (
     <>
-      <Header title="Pengaturan" subtitle="Akun, sinkronisasi & data" onMenuClick={openMenu} />
+      <Header title="Pengaturan" subtitle="Akun, sinkronisasi & data" onMenuClick={openMobileMenu} />
 
       {!hydrated ? (
         <div className="grid min-h-[50vh] place-items-center text-sm text-black/40">
