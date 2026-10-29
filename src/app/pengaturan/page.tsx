@@ -6,12 +6,12 @@
  */
 import { useState } from "react";
 import Link from "next/link";
-import { CloudUpload, CloudDownload, RotateCcw, Trash2, Database, WifiOff } from "lucide-react";
+import { CloudUpload, CloudDownload, Trash2, Database, WifiOff } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { openMobileMenu } from "@/lib/menu";
 import { Card, Button } from "@/components/ui/primitives";
 import { useFinanceStore } from "@/store/useFinanceStore";
-import { localStorageHelpers, generateDummyData } from "@/lib/storage";
+import { localStorageHelpers } from "@/lib/storage";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { formatIDR } from "@/lib/utils";
 
@@ -49,12 +49,6 @@ export default function PengaturanPage() {
     flash("Semua data lokal telah dihapus.");
   };
 
-  const handleLoadDummy = () => {
-    if (!confirm("Muat ulang data contoh? Data saat ini akan digantikan.")) return;
-    replaceLocalData(generateDummyData());
-    flash("Data contoh dimuat ulang.");
-  };
-
 
   return (
     <>
@@ -85,9 +79,6 @@ export default function PengaturanPage() {
                   {formatIDR(transactions.reduce((a, t) => a + t.amount, 0))} dicatat.
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <Button variant="outline" onClick={handleLoadDummy} className="px-3 text-xs">
-                    <RotateCcw size={14} /> Muat Data Contoh
-                  </Button>
                   <Button variant="danger" onClick={handleReset} className="px-3 text-xs">
                     <Trash2 size={14} /> Hapus Semua Data Lokal
                   </Button>

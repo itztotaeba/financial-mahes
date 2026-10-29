@@ -13,6 +13,7 @@ import { CashflowChart } from "@/components/charts/CashflowChart";
 import { CategoryPie } from "@/components/charts/CategoryPie";
 import { TransactionItem } from "@/components/transaction/TransactionItem";
 import { Card, Button } from "@/components/ui/primitives";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { useDashboardData } from "@/lib/selectors";
 import { useFinanceStore } from "@/store/useFinanceStore";
 
@@ -21,11 +22,22 @@ import { openMobileMenu } from "@/lib/menu";
 export default function DashboardPage() {
   const hydrated = useFinanceStore((s) => s.hydrated);
   const deleteTransaction = useFinanceStore((s) => s.deleteTransaction);
+  const isEmpty = useFinanceStore((s) => s.transactions.length === 0);
+  const email = useFinanceStore((s) => s.email);
+  const userId = useFinanceStore((s) => s.userId);
   const { summary, cashflow, categories, recent } = useDashboardData();
 
   return (
     <>
-      <Header title="Dashboard" subtitle="Ringkasan keuangan Anda" onMenuClick={openMobileMenu} />
+      <Header
+        title="Dashboard"
+        subtitle={
+          isEmpty
+            ? "Waktunya menulis cerita finansialmu — mulai dari satu catatan."
+            : "Ringkasan keuangan Anda"
+        }
+        onMenuClick={openMobileMenu}
+      />
 
       {!hydrated ? (
         <div className="grid min-h-[50vh] place-items-center text-sm text-black/40">
@@ -33,6 +45,29 @@ export default function DashboardPage() {
         </div>
       ) : (
         <div className="space-y-4 pb-20 lg:pb-4">
+          {/* Papan sambutan untuk akun cloud yang belum punya catatan */}
+          {isEmpty && (
+            <Card className="border border-[#2141E0]/20 bg-gradient-to-r from-[#2141E0]/[0.06] via-[#C8ACC0]/[0.10] to-[#4FB279]/[0.06]">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <h2 className="text-base font-extrabold tracking-tight text-[#151516]">
+                    {userId ? `Halo, ${email?.split("@")[0]}! 👋` : "Selamat datang di Financial Mahes 👋"}
+                  </h2>
+                  <p className="mt-1 max-w-xl text-sm leading-relaxed text-black/55">
+                    Setiap rupiah punya cerita. Mulai catat pengeluaran & pemasukan pertamamu hari
+                    ini — dalam 30 detik, grafik dan wawasan keuanganmu langsung hidup.
+                  </p>
+                </div>
+                <Button
+                  onClick={() => window.openTransactionModal?.()}
+                  className="shrink-0 px-5"
+                >
+                  <Plus size={16} /> Catat Transaksi Pertama
+                </Button>
+              </div>
+            </Card>
+          )}
+
           {/* Kartu ringkasan */}
           <SummaryCards summary={summary} />
 
@@ -70,9 +105,14 @@ export default function DashboardPage() {
             </div>
 
             {recent.length === 0 ? (
-              <p className="py-8 text-center text-sm text-black/40">
-                Belum ada transaksi. Klik “Tambah” untuk mulai mencatat.
-              </p>
+              <EmptyState
+                compact
+                icon={<span aria-hidden>🧾</span>}
+                title="Belum ada aktivitas tercatat"
+                description="Catatan kecilmu hari ini adalah data besar untuk keputusan besok. Ayo mulai!"
+                actionLabel="Catat Transaksi Pertama"
+                onAction={() => window.openTransactionModal?.()}
+              />
             ) : (
               <ul className="divide-y divide-black/5">
                 {recent.map((tx) => (

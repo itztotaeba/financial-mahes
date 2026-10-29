@@ -2,10 +2,10 @@
 
 /**
  * Halaman Login / Sync ke Cloud.
- * Alur pasca-login sesuai spesifikasi:
- *  1. Cek apakah ada data di localStorage.
- *  2. Jika ada → tawarkan "Upload ke Supabase" (sync lokal → cloud)
- *     atau "Tarik dari Supabase" (cloud menggantikan lokal).
+ * Alur pasca-login (cloud-first):
+ *  1. Login → store SELALU menarik data akun dari Supabase dan menampilkannya.
+ *  2. Panel pilihan sync HANYA muncul bila masih ada catatan lokal nyata yang
+ *     belum ada di cloud (hasil mencatat offline) — tidak pernah menawarkan dummy.
  */
 import { useState } from "react";
 import Link from "next/link";
@@ -83,9 +83,10 @@ export default function LoginPage() {
           <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[#2141E0]/10">
             <CloudUpload size={26} className="text-[#2141E0]" />
           </span>
-          <h1 className="mt-4 text-lg font-extrabold text-[#151516]">Ditemukan data lokal 📦</h1>
+          <h1 className="mt-4 text-lg font-extrabold text-[#151516]">Punya catatan offline? 📦</h1>
           <p className="mt-1 text-sm text-black/55">
-            Anda memiliki <b>{localCount}</b> transaksi tersimpan di browser ini. Mau dikemanakan?
+            Ada <b>{localCount}</b> transaksi yang dicatat sebelum login dan belum tersimpan di
+            cloud. Kirim sekarang agar aman tersinkron?
           </p>
 
           {error && (
