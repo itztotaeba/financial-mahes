@@ -19,6 +19,7 @@ export default function PengaturanPage() {
   const hydrated = useFinanceStore((s) => s.hydrated);
   const transactions = useFinanceStore((s) => s.transactions);
   const userId = useFinanceStore((s) => s.userId);
+  const userLoaded = useFinanceStore((s) => s.userLoaded);
   const email = useFinanceStore((s) => s.email);
   const syncing = useFinanceStore((s) => s.syncing);
   const pushPending = useFinanceStore((s) => s.pushPending);
@@ -36,6 +37,9 @@ export default function PengaturanPage() {
   /** Ganti isi localStorage dengan data baru lalu segarkan store. */
   const replaceLocalData = (data: typeof transactions) => {
     localStorageHelpers.save(data);
+    // Data non-kosong membatalkan penanda "sengaja kosong".
+    if (data.length === 0) localStorageHelpers.markIntentionallyEmpty();
+    else localStorageHelpers.clearIntentionallyEmpty();
     useFinanceStore.setState({ transactions: data });
   };
 
@@ -131,7 +135,8 @@ export default function PengaturanPage() {
                     </>
                   ) : (
                     <Link href="/login">
-                      <Button disabled={!isSupabaseConfigured()} className="px-3 text-xs">
+                      {/* Tunggu hasil cek sesi dulu agar tombol tidak "muncul-hilang". */}
+                      <Button disabled={!isSupabaseConfigured() || !userLoaded} className="px-3 text-xs">
                         <CloudUpload size={14} /> Login / Sync ke Cloud
                       </Button>
                     </Link>

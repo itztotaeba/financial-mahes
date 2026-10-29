@@ -20,6 +20,7 @@ export function Header({
   onMenuClick: () => void;
 }) {
   const email = useFinanceStore((s) => s.email);
+  const userLoaded = useFinanceStore((s) => s.userLoaded);
   const logout = useFinanceStore((s) => s.logout);
 
   return (
@@ -57,10 +58,16 @@ export function Header({
           </>
         ) : (
           <Link href="/login">
+            {/* disabled hanya jika Supabase benar2 tidak dikonfigurasi;
+                selama cek sesi berjalan, tampilkan status "Memeriksa…" agar stabil. */}
             <Button className="px-3 sm:px-4" disabled={!isSupabaseConfigured()}>
               <CloudUpload size={16} />
               <span className="hidden sm:inline">
-                {isSupabaseConfigured() ? "Login / Sync ke Cloud" : "Belum terkonfigurasi"}
+                {!isSupabaseConfigured()
+                  ? "Belum terkonfigurasi"
+                  : !userLoaded
+                    ? "Memeriksa sesi…"
+                    : "Login / Sync ke Cloud"}
               </span>
               <span className="sm:hidden">Sync</span>
             </Button>
