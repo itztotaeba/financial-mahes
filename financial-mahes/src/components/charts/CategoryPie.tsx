@@ -47,7 +47,7 @@ export function CategoryPie({ data }: { data: CategorySlice[] }) {
                   boxShadow: "0 8px 24px rgba(0,0,0,.12)",
                   fontSize: 12,
                 }}
-                formatter={(value: number, name: string) => [formatIDR(value), name]}
+                formatter={(value, name) => [formatIDR(Number(value)), String(name)]}
               />
             </PieChart>
           </ResponsiveContainer>

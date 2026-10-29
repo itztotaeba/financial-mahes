@@ -100,7 +100,7 @@ export default function LaporanPage() {
                       boxShadow: "0 8px 24px rgba(0,0,0,.12)",
                       fontSize: 12,
                     }}
-                    formatter={(value: number) => formatIDR(value)}
+                    formatter={(value) => formatIDR(Number(value))}
                   />
                   <Legend iconType="circle" iconSize={8} />
                   <Bar dataKey="Pemasukan" fill="#4FB279" radius={[6, 6, 0, 0]} maxBarSize={28} />

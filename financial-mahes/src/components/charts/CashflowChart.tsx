@@ -57,14 +57,14 @@ export function CashflowChart({ data }: { data: DayPoint[] }) {
                 boxShadow: "0 8px 24px rgba(0,0,0,.12)",
                 fontSize: 12,
               }}
-              formatter={(value: number, name: string) => [
-                formatIDR(value),
+              formatter={(value, name) => [
+                formatIDR(Number(value)),
                 name === "income" ? "Pemasukan" : "Pengeluaran",
               ]}
-              labelFormatter={(label: string) => `Tanggal ${label}`}
+              labelFormatter={(label) => `Tanggal ${String(label)}`}
             />
             <Legend
-              formatter={(value: string) => (
+              formatter={(value) => (
                 <span className="text-xs font-medium text-[#151516]">
                   {value === "income" ? "Pemasukan" : "Pengeluaran"}
                 </span>
