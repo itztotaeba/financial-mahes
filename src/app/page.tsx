@@ -16,11 +16,7 @@ import { Card, Button } from "@/components/ui/primitives";
 import { useDashboardData } from "@/lib/selectors";
 import { useFinanceStore } from "@/store/useFinanceStore";
 
-/**
- * AppShell (di layout group) menyediakan openMenu melalui event global
- * "mahes:open-menu" agar setiap halaman bisa memicu drawer mobile.
- */
-const openMobileMenu = () => window.dispatchEvent(new Event("mahes:open-menu"));
+import { openMobileMenu } from "@/lib/menu";
 
 export default function DashboardPage() {
   const hydrated = useFinanceStore((s) => s.hydrated);

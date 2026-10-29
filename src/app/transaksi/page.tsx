@@ -6,6 +6,7 @@
 import { useMemo, useState } from "react";
 import { Plus, Search } from "lucide-react";
 import { Header } from "@/components/layout/Header";
+import { openMobileMenu } from "@/lib/menu";
 import { Card, Button, Input } from "@/components/ui/primitives";
 import { TransactionItem } from "@/components/transaction/TransactionItem";
 import { useFinanceStore } from "@/store/useFinanceStore";
@@ -52,11 +53,10 @@ export default function TransaksiPage() {
     return { income, expense };
   }, [filtered]);
 
-  const openMenu = () => window.dispatchEvent(new Event("mahes:open-menu"));
 
   return (
     <>
-      <Header title="Transaksi" subtitle="Kelola seluruh catatan keuangan" onMenuClick={openMenu} />
+      <Header title="Transaksi" subtitle="Kelola seluruh catatan keuangan" onMenuClick={openMobileMenu} />
 
       {!hydrated ? (
         <div className="grid min-h-[50vh] place-items-center text-sm text-black/40">
