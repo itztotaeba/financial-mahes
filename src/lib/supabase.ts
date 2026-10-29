@@ -7,16 +7,26 @@ export const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ""
 /** Apakah env Supabase tersedia? (menentukan fitur cloud bisa dipakai) */
 export const isSupabaseConfigured = () => Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 
-/** Payload untuk upsert satu transaksi ke tabel `transactions`. */
+/**
+ * Payload untuk insert/upsert satu transaksi ke tabel `transactions`.
+ * PENTING: `id` lokal TIDAK ikut dikirim — id dummy lokal (mis. "dummy-3-…")
+ * bukan UUID valid, sehingga PostgREST akan gagal meng-cast ke kolom `id uuid`
+ * dan menolak seluruh baris (error 400). Biarkan database yang membuat UUID.
+ */
 export function toSupabasePayload(t: Transaction) {
   return {
-    id: t.id,
     type: t.type,
     amount: Math.round(t.amount),
     category: t.category,
     date: t.date,
     note: t.note ?? "",
+    client_id: t.id, // dedup: id lokal disimpan di kolom text `client_id`
   };
+}
+
+/** Apakah sebuah string adalah UUID valid (v4 atau lainnya)? */
+export function isUuid(s: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
 }
 
 /** Baris Supabase -> objek Transaction aplikasi. */

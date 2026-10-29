@@ -42,7 +42,14 @@ export default function LoginPage() {
       const result =
         mode === "login" ? await login(email, password) : await signup(email, password);
       if (result.error) {
-        setError(result.error);
+        // Sinyal khusus: pendaftaran butuh konfirmasi email.
+        if (result.error === "CHECK_EMAIL") {
+          setError(
+            "Akun dibuat, tetapi Anda harus mengonfirmasi email terlebih dahulu (cek inbox). Setelah itu baru bisa login. Tip: matikan 'Confirm email' di Supabase → Authentication → Providers → Email agar bisa langsung coba."
+          );
+        } else {
+          setError(result.error);
+        }
         return;
       }
       if (result.hasLocalData) setShowSyncChoice(true);
@@ -53,9 +60,19 @@ export default function LoginPage() {
   };
 
   const finishSync = async (direction: "push" | "pull") => {
-    if (direction === "push") await pushToCloud();
-    else await pullFromCloud();
-    router.push("/");
+    setError("");
+    try {
+      if (direction === "push") await pushToCloud();
+      else await pullFromCloud();
+      router.push("/");
+    } catch (err) {
+      // Tampilkan kegagalan sync alih-alih diam-diam pindah halaman.
+      setError(
+        err instanceof Error
+          ? `Sinkronisasi gagal: ${err.message}`
+          : "Sinkronisasi gagal. Pastikan script SQL 003_fix_schema.sql sudah dijalankan di Supabase."
+      );
+    }
   };
 
   /* ---------- Panel pilihan sinkronisasi (langkah 2 spesifikasi) ---------- */
@@ -70,6 +87,12 @@ export default function LoginPage() {
           <p className="mt-1 text-sm text-black/55">
             Anda memiliki <b>{localCount}</b> transaksi tersimpan di browser ini. Mau dikemanakan?
           </p>
+
+          {error && (
+            <p className="mt-3 rounded-lg bg-[#D3534C]/10 px-3 py-2 text-left text-xs font-semibold text-[#D3534C]">
+              {error}
+            </p>
+          )}
 
           <div className="mt-6 space-y-3">
             <Button onClick={() => finishSync("push")} disabled={syncing} className="w-full">
