@@ -7,9 +7,9 @@
  *     Tanpa langkah ini, semua halaman akan terjebak di state "Memuat data lokal…".
  *  2. Menyediakan Sidebar desktop + drawer mobile + modal transaksi global
  *     untuk seluruh halaman (kecuali /login yang tampil fullscreen).
- *  3. Sinkronisasi multi-device:
- *     - Supabase Realtime (postgres_changes): perubahan dari device A langsung
- *       muncul di device B TANPA refresh.
+ *  3. Sinkronisasi multi-device (tanpa websocket — REST polling ringan):
+ *     - Polling watermark tiap 20 detik: perubahan device A muncul di device B
+ *       tanpa refresh manual.
  *     - BroadcastChannel: tab lain di perangkat yang sama ikut ter-update.
  *     - Fokus tab / visibilitychange: pull-on-load saat user kembali ke tab.
  */
@@ -46,60 +46,61 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, []);
 
   /**
-   * Langganan Supabase Realtime untuk tabel `transactions`.
-   * RLS membatasi payload hanya milik user yang login, sehingga event apa pun
-   * yang masuk pasti relevan — tinggal tarik ulang snapshot cloud.
+   * Sinkronisasi multi-device REALTIME — TANPA membuka koneksi wss://.
+   * ---------------------------------------------------------------------
+   * Keputusan teknis (Senior Frontend Engineer):
+   * Supabase Realtime berbasis websocket sering gagal di jaringan tertentu
+   * (proxy, firewall, sebagian ISP) dan meninggalkan error merah di console:
+   *   "WebSocket connection to 'wss://.../realtime/v1/websocket' failed"
+   * Karena aplikasi sudah punya jalur sinkron ringan berbasis REST (HTTPS),
+   * kita TIDAK memakai channel realtime sama sekali. Sebagai gantinya:
+   *   - Polling `refreshIfStale()` tiap 20 detik saat tab aktif & online.
+   *     Fungsi ini hanya mengirim 2 query ringan (head-count + updated_at
+   *     terbaru) dan menarik data penuh HANYA bila watermark cloud berubah.
+   *   - Refresh otomatis saat user kembali ke tab (focus/visibilitychange).
+   *   - BroadcastChannel untuk tab lain di perangkat yang sama (lihat effect
+   *     berikutnya).
+   * Hasilnya: device B melihat perubahan device A dalam <=20 detik tanpa
+   * refresh manual, dan console bersih dari error websocket.
    */
   useEffect(() => {
-    if (!userId) return;
-    let cancelled = false;
-    let channel: ReturnType<Awaited<ReturnType<typeof import("@supabase/supabase-js").createClient>>["channel"]> | null =
-      null;
+    if (!userId) return; // hanya untuk user yang login (data cloud)
+    let interval: ReturnType<typeof setInterval> | null = null;
 
-    (async () => {
-      try {
-        // PAKAI SINGLETON yang sama dengan store — bukan createClient baru.
-        // (Instance ganda memicu warning GoTrueClient "Multiple instances"
-        //  dan bisa membuat refresh token saling menimpa.)
-        const { getSupabaseClient } = await import("@/lib/supabaseClient");
-        let sb: ReturnType<typeof getSupabaseClient>;
-        try {
-          sb = getSupabaseClient();
-        } catch {
-          return; // env belum diisi -> realtime dilewati
+    const startPolling = () => {
+      if (interval) return;
+      interval = setInterval(() => {
+        if (document.visibilityState === "visible" && navigator.onLine) {
+          void useFinanceStore.getState().refreshIfStale();
         }
-        channel = sb
-          .channel(`transactions:${userId}`)
-          .on(
-            "postgres_changes",
-            { event: "*", schema: "public", table: "transactions" },
-            () => {
-              if (cancelled) return;
-              // Perubahan di device A -> tarik snapshot terbaru ke device B.
-              void useFinanceStore.getState().pullFromCloud();
-            }
-          )
-          .subscribe();
-      } catch {
-        /* realtime gagal (offline/proxy) -> tetap aman, fallback pull-on-load */
+      }, 20_000); // 20 detik — hemat kuota, tetap terasa real-time
+    };
+
+    const stopPolling = () => {
+      if (interval) {
+        clearInterval(interval);
+        interval = null;
       }
-    })();
+    };
+
+    // Tarik segera saat login/mount, lalu nyalakan polling.
+    void useFinanceStore.getState().refreshIfStale();
+    startPolling();
+
+    // Jeda polling saat tab tersembunyi (hemat baterai/CPU), lanjut saat aktif.
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        void useFinanceStore.getState().refreshIfStale();
+        startPolling();
+      } else {
+        stopPolling();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
 
     return () => {
-      cancelled = true;
-      if (channel) {
-        // Cukup unsubscribe pada instance singleton — JANGAN buat client baru
-        // hanya untuk removeChannel (itu sumber utama peringatan multi-instance).
-        import("@/lib/supabaseClient")
-          .then(({ getSupabaseClient }) => {
-            try {
-              getSupabaseClient().removeChannel(channel!);
-            } catch {
-              /* env hilang -> noop */
-            }
-          })
-          .catch(() => undefined);
-      }
+      stopPolling();
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [userId]);
 
