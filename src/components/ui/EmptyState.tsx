@@ -35,7 +35,7 @@ export function EmptyState({
       }`}
     >
       {/* Lingkaran dekoratif dengan gradasi lembut palet Casha */}
-      <span className="grid h-16 w-16 place-items-center rounded-full bg-gradient-to-br from-[#647637]/12 via-[#C6B54F]/20 to-[#BB622E]/10 text-3xl ring-1 ring-black/5">
+      <span className="grid h-16 w-16 place-items-center rounded-full bg-gradient-to-br from-[#2141E0]/10 via-[#C8ACC0]/25 to-[#4FB279]/15 text-3xl ring-1 ring-black/5">
         {icon}
       </span>
       <h3 className="mt-4 text-base font-extrabold tracking-tight text-ink">{title}</h3>

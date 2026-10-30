@@ -106,7 +106,7 @@ export default function TransaksiPage() {
                         : value === "expense"
                           ? "bg-expense text-white"
                           : "bg-primary text-white"
-                      : "border border-line bg-white text-ink/55 hover:bg-[#FAFAF9]"
+                      : "bg-white/60 text-ink/55 hover:bg-white/90"
                   )}
                 >
                   {label}
@@ -117,7 +117,7 @@ export default function TransaksiPage() {
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
-                className="ml-auto rounded-full border border-line bg-white px-3 py-1.5 text-xs font-semibold text-ink/70 outline-none focus:border-income/60"
+                className="glass-pill ml-auto rounded-full bg-white/70 px-3 py-1.5 text-xs font-semibold text-ink/70 outline-none focus:border-primary/50"
               >
                 <option value="all">Semua kategori</option>
                 {usedCategories.map((c) => (

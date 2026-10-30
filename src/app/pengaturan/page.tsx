@@ -69,7 +69,7 @@ export default function PengaturanPage() {
           {/* Status penyimpanan lokal */}
           <Card>
             <div className="flex items-start gap-3">
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-accent/20 text-muted">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-lilac/25 text-[#C8ACC0]">
                 <Database size={18} className="text-[#8f6f87]" />
               </span>
               <div className="min-w-0 flex-1">

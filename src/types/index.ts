@@ -42,18 +42,18 @@ export interface CategoryInfo {
 
 /** Katalog kategori bawaan (bisa dikembangkan lewat Pengaturan). */
 export const CATEGORY_MAP: Record<string, CategoryInfo> = {
-  gaji: { label: "Gaji", icon: Wallet, color: "#647637" },
-  freelance: { label: "Freelance", icon: Laptop, color: "#74864B" },
-  investasi: { label: "Investasi", icon: TrendingUp, color: "#A8B08A" },
-  hadiah: { label: "Hadiah", icon: Gift, color: "#C6B54F" },
-  makan: { label: "Makan & Minum", icon: UtensilsCrossed, color: "#BB622E" },
-  transport: { label: "Transportasi", icon: Car, color: "#8C9A5B" },
-  hiburan: { label: "Hiburan", icon: Clapperboard, color: "#C08A5E" },
-  tagihan: { label: "Tagihan", icon: ReceiptText, color: "#A64B2A" },
-  belanja: { label: "Belanja", icon: ShoppingBag, color: "#7E8F57" },
-  kesehatan: { label: "Kesehatan", icon: Pill, color: "#9AA86E" },
-  pendidikan: { label: "Pendidikan", icon: GraduationCap, color: "#8FA37C" },
-  lainnya: { label: "Lainnya", icon: Package, color: "#B4B2A0" },
+  gaji: { label: "Gaji", icon: Wallet, color: "#4FB279" },
+  freelance: { label: "Freelance", icon: Laptop, color: "#2141E0" },
+  investasi: { label: "Investasi", icon: TrendingUp, color: "#C8ACC0" },
+  hadiah: { label: "Hadiah", icon: Gift, color: "#8B5CF6" },
+  makan: { label: "Makan & Minum", icon: UtensilsCrossed, color: "#F59E0B" },
+  transport: { label: "Transportasi", icon: Car, color: "#3B82F6" },
+  hiburan: { label: "Hiburan", icon: Clapperboard, color: "#EC4899" },
+  tagihan: { label: "Tagihan", icon: ReceiptText, color: "#D3534C" },
+  belanja: { label: "Belanja", icon: ShoppingBag, color: "#14B8A6" },
+  kesehatan: { label: "Kesehatan", icon: Pill, color: "#22C55E" },
+  pendidikan: { label: "Pendidikan", icon: GraduationCap, color: "#6366F1" },
+  lainnya: { label: "Lainnya", icon: Package, color: "#9CA3AF" },
 };
 
 export const INCOME_CATEGORIES = ["gaji", "freelance", "investasi", "hadiah", "lainnya"];

@@ -17,38 +17,26 @@ const config: Config = {
         ui: ["var(--font-ui)"],
         data: ["var(--font-data)"],
       },
-      /**
-       * Palet warna resmi Financial Mahes — "Fresh Earthy Minimalism".
-       * Green olive sebagai primary/success (pemasukan), terracotta sebagai
-       * danger (pengeluaran), kuning earthy sebagai aksen warning/kategori.
-       * Nama token (income/expense/primary/lilac) DIPERTAHANKAN agar seluruh
-       * logic & class yang sudah ada tidak perlu diubah — hanya nilainya di-override.
-       */
+      /** Palet warna resmi Financial Mahes. */
       colors: {
-        ink: "#162701", // teks utama (sangat gelap, bukan hitam pekat)
-        canvas: "#F7F7F5", // background off-white lembut
-        card: "#FAFAF9", // background kartu sekunder
-        line: "#E5E5E0", // border sangat halus
-        income: "#647637", // primary / success (pemasukan)
-        muted: "#74864B", // secondary / muted green
-        accent: "#C6B54F", // aksen 1 (warning / kategori)
-        expense: "#BB622E", // aksen 2 (danger / pengeluaran)
-        primary: "#647637", // override primary → olive (bukan biru lagi)
-        lilac: "#C8ACC0", // aksen lembut (dipertahankan untuk compat)
-        soft: "#B4B2A0", // teks sekunder / sumbu chart
+        ink: "#151516", // teks utama
+        canvas: "#F6F6F6", // background
+        income: "#4FB279", // aksen hijau (pemasukan)
+        expense: "#D3534C", // aksen merah (pengeluaran)
+        primary: "#2141E0", // primary blue
+        lilac: "#C8ACC0", // aksen lembut
       },
       boxShadow: {
-        glass: "0 8px 30px rgb(0 0 0 / 0.04)",
-        "glass-lg": "0 16px 40px rgb(0 0 0 / 0.06)",
-        soft: "0 8px 30px rgb(0 0 0 / 0.04)",
+        glass: "0 8px 32px rgba(21, 21, 22, 0.08)",
+        "glass-lg": "0 16px 48px rgba(21, 21, 22, 0.12)",
       },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
         "gradient-conic":
           "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
-        // Sapuan earthy sangat tipis (fallback class lama .bg-glass-mesh).
+        // Mesh gradient lembut untuk halaman bergaya liquid glass.
         "glass-mesh":
-          "radial-gradient(60rem 40rem at 10% -10%, rgba(116,134,75,0.06), transparent 60%), radial-gradient(50rem 35rem at 110% 10%, rgba(198,181,79,0.07), transparent 55%), radial-gradient(45rem 35rem at 50% 115%, rgba(100,118,55,0.05), transparent 60%)",
+          "radial-gradient(60rem 40rem at 10% -10%, rgba(33,65,224,0.10), transparent 60%), radial-gradient(50rem 35rem at 110% 10%, rgba(200,172,192,0.22), transparent 55%), radial-gradient(45rem 35rem at 50% 115%, rgba(79,178,121,0.10), transparent 60%)",
       },
     },
   },
