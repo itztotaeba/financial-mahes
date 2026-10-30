@@ -26,7 +26,35 @@ export function getSupabaseClient(): SupabaseClient {
   if (!cached) {
     cached = createClient(url, key, {
       auth: { persistSession: true, autoRefreshToken: true },
+      realtime: {
+        params: { eventsPerSecond: 10 },
+        logLevel: "silent", // matikan log internal realtime agar console bersih
+      },
     });
   }
   return cached;
+}
+
+/**
+ * Deteksi dini apakah server Realtime Supabase dapat dijangkau.
+ * Endpoint `/realtime/v1/api/info` selalu menjawab JSON bila layanan sehat.
+ * Dipakai AppShell untuk memutuskan: subscribe realtime ATAU fallback polling.
+ */
+export async function isRealtimeReachable(timeoutMs = 3500): Promise<boolean> {
+  try {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!url || !key) return false;
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), timeoutMs);
+    const res = await fetch(`${url.replace(/\/$/, "")}/realtime/v1/api/info`, {
+      headers: { apikey: key },
+      signal: ctrl.signal,
+      cache: "no-store",
+    });
+    clearTimeout(t);
+    return res.ok;
+  } catch {
+    return false;
+  }
 }
