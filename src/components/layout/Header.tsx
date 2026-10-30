@@ -35,7 +35,7 @@ export function Header({
           <Menu size={18} />
         </button>
         <div className="min-w-0">
-          <h1 className="truncate text-xl font-extrabold text-ink sm:text-2xl">{title}</h1>
+          <h1 className="truncate text-xl font-extrabold tracking-tight text-ink text-glass-shadow sm:text-2xl">{title}</h1>
           {subtitle && <p className="truncate text-sm text-muted-ink">{subtitle}</p>}
         </div>
       </div>

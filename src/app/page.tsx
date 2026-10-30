@@ -47,13 +47,13 @@ export default function DashboardPage() {
         <div className="space-y-4 pb-20 lg:pb-4">
           {/* Papan sambutan untuk akun cloud yang belum punya catatan */}
           {isEmpty && (
-            <Card className="border-primary/15 bg-gradient-to-r from-primary/[0.07] via-lilac/[0.14] to-income/[0.07]">
+            <Card className="border-white/50 bg-gradient-to-r from-primary/[0.10] via-lilac/[0.18] to-income/[0.10]">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
-                  <h2 className="text-base font-extrabold tracking-tight text-ink">
+                  <h2 className="text-lg font-extrabold tracking-tight text-ink sm:text-xl">
                     {userId ? `Halo, ${email?.split("@")[0]}!` : "Selamat datang di Financial Mahes"}
                   </h2>
-                  <p className="mt-1 max-w-xl text-sm leading-relaxed text-ink/60">
+                  <p className="mt-1 max-w-xl text-sm leading-relaxed text-ink/70">
                     Setiap rupiah punya cerita. Mulai catat pengeluaran & pemasukan pertamamu hari
                     ini — dalam 30 detik, grafik dan wawasan keuanganmu langsung hidup.
                   </p>

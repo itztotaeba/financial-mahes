@@ -3,12 +3,54 @@
 @tailwind utilities;
 
 /*
-  Financial Mahes — Liquid Glass Design System (ala iOS 26)
+  Plus Jakarta Sans — self-host (latin subset, woff2).
+  Sengaja TIDAK memakai next/font/google: loader @next/font pernah crash
+  di CI Vercel ("Cannot read properties of null (reading '1')") karena
+  fetch metadata Google Fonts. File lokal = build selalu deterministik.
+*/
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/plus-jakarta-sans-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/plus-jakarta-sans-500.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/plus-jakarta-sans-600.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/plus-jakarta-sans-700.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url("/fonts/plus-jakarta-sans-800.woff2") format("woff2");
+}
+
+/*
+  Financial Mahes — Liquid Glass Design System v2 (iOS 26 / "Liquid Glass")
   ------------------------------------------------------------
-  Prinsip: permukaan "kaca" translusen + backdrop-blur, border halus,
-  shadow lembut, dan mesh gradient di latar. Kontras teks tetap jadi
-  prioritas: angka/teks penting memakai warna solid #151516 (ink),
-  bukan putih di atas blur tipis.
+  Prinsip: permukaan kaca yang benar-benar BENING (blur besar + saturasi
+  tinggi supaya warna latar "menembus" kaca), specular highlight di tepi
+  atas, shadow berlapis untuk kedalaman. Keterbacaan tetap prioritas #1:
+  teks penting solid #151516, teks sekunder minimal rgba(21,21,22,.68).
 */
 
 :root {
@@ -27,45 +69,101 @@ body {
 
 body {
   color: var(--ink);
-  /* Latar canvas + mesh gradient lembut agar efek kaca terlihat "hidup". */
+  /* Mesh gradient lebih pekat dari v1 — semakin kaya warna di belakang
+     kaca, semakin terasa efek liquid glass-nya. */
   background-color: var(--canvas);
   background-image: radial-gradient(
-      60rem 40rem at 8% -10%,
-      rgba(33, 65, 224, 0.09),
-      transparent 60%
+      55rem 38rem at 6% -12%,
+      rgba(33, 65, 224, 0.16),
+      transparent 62%
     ),
-    radial-gradient(50rem 35rem at 112% 8%, rgba(200, 172, 192, 0.22), transparent 55%),
-    radial-gradient(45rem 35rem at 50% 118%, rgba(79, 178, 121, 0.09), transparent 60%);
+    radial-gradient(48rem 34rem at 114% 6%, rgba(200, 172, 192, 0.34), transparent 58%),
+    radial-gradient(42rem 32rem at 52% 116%, rgba(79, 178, 121, 0.16), transparent 62%),
+    radial-gradient(30rem 24rem at 88% 82%, rgba(211, 83, 76, 0.08), transparent 60%);
   background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
 @layer components {
-  /* Kartu kaca utama — opacity sengaja cukup tinggi (0.65–0.75) supaya
-     teks kecil tetap kontras & mudah dipindai (fast-scanning). */
+  /* ── Kartu kaca utama ─────────────────────────────────────────────
+     bg-white/55 + blur 28px + saturate(1.8): bening & berwarna, khas
+     iOS 26. Shadow dua lapis (dekat + jauh) memberi kesan melayang. */
   .glass-card {
-    @apply rounded-3xl border border-white/60 bg-white/70 shadow-glass backdrop-blur-xl;
+    border-radius: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.7) inset,
+      0 8px 24px rgba(21, 21, 22, 0.06),
+      0 24px 64px rgba(33, 65, 224, 0.08);
   }
 
-  /* Versi lebih bening untuk panel sekunder / nested. */
+  /* Panel sekunder / nested — sedikit lebih transparan. */
   .glass-subtle {
-    @apply rounded-2xl border border-white/50 bg-white/45 backdrop-blur-md;
+    border-radius: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    background: rgba(255, 255, 255, 0.38);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.55) inset, 0 6px 18px rgba(21, 21, 22, 0.05);
   }
 
-  /* Bar / pill navigasi mengambang. */
+  /* Bar / pill mengambang (header, avatar, tombol ikon). */
   .glass-pill {
-    @apply rounded-full border border-white/60 bg-white/60 shadow-glass backdrop-blur-xl;
+    border-radius: 9999px;
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.7) inset,
+      0 6px 16px rgba(21, 21, 22, 0.07);
   }
 
   /* Chip kategori transaksi. */
   .glass-chip {
-    @apply inline-flex items-center gap-1.5 rounded-full border border-white/60 bg-white/55 px-2.5 py-1 text-xs font-medium backdrop-blur-md;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    border-radius: 9999px;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.45);
+    padding: 0.25rem 0.625rem;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    font-weight: 500;
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
   }
 
   /* Skeleton loading transparan. */
   .glass-skeleton {
-    @apply animate-pulse rounded-2xl border border-white/40 bg-white/40;
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    border-radius: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.35);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  /* Kartu saldo gelap — versi "smoked glass": bening tapi pekat. */
+  .glass-dark {
+    border-radius: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: linear-gradient(
+      155deg,
+      rgba(30, 30, 34, 0.88) 0%,
+      rgba(21, 21, 22, 0.82) 55%,
+      rgba(33, 65, 224, 0.35) 130%
+    );
+    backdrop-filter: blur(30px) saturate(160%);
+    -webkit-backdrop-filter: blur(30px) saturate(160%);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.18) inset,
+      0 12px 32px rgba(21, 21, 22, 0.28);
   }
 }
 
@@ -76,7 +174,13 @@ body {
 
   /* Teks sekunder yang tetap terbaca di atas permukaan kaca. */
   .text-muted-ink {
-    color: rgba(21, 21, 22, 0.62);
+    color: rgba(21, 21, 22, 0.68);
+  }
+
+  /* Halo teks tipis — menjaga angka/heading tetap tajam saat berada
+     tepat di atas area blur yang terang. */
+  .text-glass-shadow {
+    text-shadow: 0 1px 1px rgba(255, 255, 255, 0.45);
   }
 
   /* Scrollbar halus untuk daftar transaksi. */
