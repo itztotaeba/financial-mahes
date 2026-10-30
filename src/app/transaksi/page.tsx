@@ -4,7 +4,7 @@
  * Halaman Transaksi: daftar penuh + pencarian + filter tipe/kategori.
  */
 import { useMemo, useState } from "react";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, PenLine } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { openMobileMenu } from "@/lib/menu";
 import { Card, Button, Input } from "@/components/ui/primitives";
@@ -60,7 +60,7 @@ export default function TransaksiPage() {
       <Header title="Transaksi" subtitle="Kelola seluruh catatan keuangan" onMenuClick={openMobileMenu} />
 
       {!hydrated ? (
-        <div className="grid min-h-[50vh] place-items-center text-sm text-black/40">
+        <div className="grid min-h-[50vh] place-items-center text-sm text-muted-ink">
           Memuat data lokal…
         </div>
       ) : (
@@ -71,7 +71,7 @@ export default function TransaksiPage() {
               <div className="relative flex-1">
                 <Search
                   size={16}
-                  className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-black/35"
+                  className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-ink"
                 />
                 <Input
                   placeholder="Cari catatan atau kategori…"
@@ -101,11 +101,11 @@ export default function TransaksiPage() {
                     "rounded-full px-3.5 py-1.5 text-xs font-bold transition-colors",
                     typeFilter === value
                       ? value === "income"
-                        ? "bg-[#4FB279] text-white"
+                        ? "bg-income text-white"
                         : value === "expense"
-                          ? "bg-[#D3534C] text-white"
-                          : "bg-[#2141E0] text-white"
-                      : "bg-[#F6F6F6] text-black/55 hover:bg-black/10"
+                          ? "bg-expense text-white"
+                          : "bg-primary text-white"
+                      : "bg-white/60 text-ink/55 hover:bg-white/90"
                   )}
                 >
                   {label}
@@ -116,21 +116,21 @@ export default function TransaksiPage() {
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
-                className="ml-auto rounded-full border border-black/10 bg-white px-3 py-1.5 text-xs font-semibold text-black/60 outline-none focus:border-[#2141E0]"
+                className="glass-pill ml-auto rounded-full bg-white/70 px-3 py-1.5 text-xs font-semibold text-ink/70 outline-none focus:border-primary/50"
               >
                 <option value="all">Semua kategori</option>
                 {usedCategories.map((c) => (
                   <option key={c} value={c}>
-                    {CATEGORY_MAP[c]?.emoji} {CATEGORY_MAP[c]?.label ?? c}
+                    {CATEGORY_MAP[c]?.label ?? c}
                   </option>
                 ))}
               </select>
             </div>
 
-            <p className="text-xs text-black/45">
+            <p className="text-xs text-muted-ink">
               Menampilkan <b>{filtered.length}</b> transaksi · Pemasukan{" "}
-              <b className="text-[#4FB279]">{formatIDR(filteredTotals.income)}</b> · Pengeluaran{" "}
-              <b className="text-[#D3534C]">{formatIDR(filteredTotals.expense)}</b>
+              <b className="text-income">{formatIDR(filteredTotals.income)}</b> · Pengeluaran{" "}
+              <b className="text-expense">{formatIDR(filteredTotals.expense)}</b>
             </p>
           </Card>
 
@@ -140,7 +140,7 @@ export default function TransaksiPage() {
               transactions.length === 0 ? (
                 // User benar-benar baru: sambut dengan onboarding.
                 <EmptyState
-                  icon={<span aria-hidden>✍️</span>}
+                  icon={<PenLine size={26} />}
                   title="Halaman masih kosong"
                   description="Mulai tulis ceritamu hari ini. Satu catatan pengeluaran atau pemasukan sudah cukup untuk menghidupkan dashboard-mu."
                   actionLabel="Tambah Transaksi"
@@ -148,7 +148,7 @@ export default function TransaksiPage() {
                 />
               ) : (
                 // Ada data, tapi tidak cocok dengan filter aktif.
-                <p className="py-12 text-center text-sm text-black/40">
+                <p className="py-12 text-center text-sm text-muted-ink">
                   Tidak ada transaksi yang cocok dengan filter.
                 </p>
               )

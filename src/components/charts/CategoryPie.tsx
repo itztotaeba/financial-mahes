@@ -19,8 +19,8 @@ export function CategoryPie({ data }: { data: CategorySlice[] }) {
   return (
     <Card className="h-full">
       <div className="mb-2">
-        <h2 className="text-base font-bold text-[#151516]">Wawasan Perilaku</h2>
-        <p className="text-xs text-black/45">Distribusi pengeluaran per kategori</p>
+        <h2 className="text-base font-bold text-ink">Wawasan Perilaku</h2>
+        <p className="text-xs text-muted-ink">Distribusi pengeluaran per kategori</p>
       </div>
 
       <div className="flex flex-col items-center gap-4 sm:flex-row">
@@ -54,8 +54,8 @@ export function CategoryPie({ data }: { data: CategorySlice[] }) {
           {/* Total di tengah donut */}
           <div className="pointer-events-none absolute inset-0 grid place-items-center">
             <div className="text-center">
-              <p className="text-[10px] uppercase tracking-wide text-black/40">Total</p>
-              <p className="max-w-[90px] truncate text-sm font-extrabold text-[#151516]">
+              <p className="text-[10px] uppercase tracking-wide text-muted-ink">Total</p>
+              <p className="max-w-[90px] truncate text-sm font-extrabold text-ink">
                 {formatIDR(chartData.reduce((a, b) => a + b.value, 0))}
               </p>
             </div>
@@ -71,9 +71,9 @@ export function CategoryPie({ data }: { data: CategorySlice[] }) {
                   className="h-2.5 w-2.5 shrink-0 rounded-full"
                   style={{ backgroundColor: slice.color }}
                 />
-                <span className="truncate text-[#151516]/80">{slice.name}</span>
+                <span className="truncate text-ink/80">{slice.name}</span>
               </span>
-              <span className="shrink-0 font-semibold text-[#151516]">
+              <span className="shrink-0 font-semibold text-ink">
                 {slice.percent ? `${slice.percent.toFixed(0)}%` : "—"}
               </span>
             </li>

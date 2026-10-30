@@ -78,19 +78,19 @@ export default function LoginPage() {
   /* ---------- Panel pilihan sinkronisasi (langkah 2 spesifikasi) ---------- */
   if (showSyncChoice) {
     return (
-      <div className="grid min-h-screen place-items-center bg-[#F6F6F6] px-4">
+      <div className="grid min-h-screen place-items-center px-4 py-10">
         <Card className="w-full max-w-md text-center">
-          <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[#2141E0]/10">
-            <CloudUpload size={26} className="text-[#2141E0]" />
+          <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-primary/10">
+            <CloudUpload size={26} className="text-primary" />
           </span>
-          <h1 className="mt-4 text-lg font-extrabold text-[#151516]">Punya catatan offline? 📦</h1>
-          <p className="mt-1 text-sm text-black/55">
+          <h1 className="mt-4 text-lg font-extrabold text-ink">Punya catatan offline?</h1>
+          <p className="mt-1 text-sm text-muted-ink">
             Ada <b>{localCount}</b> transaksi yang dicatat sebelum login dan belum tersimpan di
             cloud. Kirim sekarang agar aman tersinkron?
           </p>
 
           {error && (
-            <p className="mt-3 rounded-lg bg-[#D3534C]/10 px-3 py-2 text-left text-xs font-semibold text-[#D3534C]">
+            <p className="mt-3 rounded-lg bg-expense/10 px-3 py-2 text-left text-xs font-semibold text-expense">
               {error}
             </p>
           )}
@@ -104,7 +104,7 @@ export default function LoginPage() {
             </Button>
             <button
               onClick={() => router.push("/")}
-              className="text-xs font-semibold text-black/45 hover:text-[#151516]"
+              className="text-xs font-semibold text-muted-ink hover:text-ink"
             >
               Lewati — sinkron nanti saja lewat Pengaturan
             </button>
@@ -116,34 +116,34 @@ export default function LoginPage() {
 
   /* ---------- Form login/signup ---------- */
   return (
-    <div className="grid min-h-screen place-items-center bg-[#F6F6F6] px-4">
+    <div className="grid min-h-screen place-items-center px-4 py-10">
       <div className="w-full max-w-md">
-        <Link href="/" className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-black/50 hover:text-[#151516]">
+        <Link href="/" className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-muted-ink hover:text-ink">
           <ArrowLeft size={16} /> Kembali ke aplikasi
         </Link>
 
         <Card className="p-7">
           <div className="mb-6 flex items-center gap-3">
-            <span className="grid h-11 w-11 place-items-center rounded-xl bg-[#2141E0] text-white">
+            <span className="grid h-11 w-11 place-items-center rounded-xl bg-primary text-white">
               <Wallet size={22} />
             </span>
             <div>
-              <h1 className="text-lg font-extrabold text-[#151516]">Login / Sync ke Cloud</h1>
-              <p className="text-xs text-black/45">
+              <h1 className="text-lg font-extrabold text-ink">Login / Sync ke Cloud</h1>
+              <p className="text-xs text-muted-ink">
                 Opsional — aplikasi tetap penuh fungsi tanpa akun.
               </p>
             </div>
           </div>
 
           {/* Toggle mode */}
-          <div className="mb-5 grid grid-cols-2 gap-1.5 rounded-xl bg-[#F6F6F6] p-1.5">
+          <div className="mb-5 grid grid-cols-2 gap-1.5 rounded-full border border-white/60 bg-white/50 p-1.5 backdrop-blur-md">
             {(["login", "signup"] as const).map((m) => (
               <button
                 key={m}
                 type="button"
                 onClick={() => setMode(m)}
-                className={`rounded-lg py-2 text-sm font-bold transition-all ${
-                  mode === m ? "bg-white text-[#2141E0] shadow" : "text-black/45 hover:text-black"
+                className={`rounded-full py-2 text-sm font-bold transition-all ${
+                  mode === m ? "bg-white text-primary shadow-glass" : "text-muted-ink hover:text-ink"
                 }`}
               >
                 {m === "login" ? "Masuk" : "Daftar"}
@@ -174,7 +174,7 @@ export default function LoginPage() {
               />
             </div>
 
-            {error && <p className="text-xs font-semibold text-[#D3534C]">{error}</p>}
+            {error && <p className="text-xs font-semibold text-expense">{error}</p>}
 
             <Button type="submit" className="w-full">
               {mode === "login" ? "Masuk & Aktifkan Sinkronisasi" : "Buat Akun & Sinkronkan"}
@@ -182,7 +182,7 @@ export default function LoginPage() {
 
             {!isSupabaseConfigured() && (
               <p className="rounded-lg bg-[#F59E0B]/10 px-3 py-2 text-xs text-[#92610a]">
-                ⚠️ Belum ada konfigurasi Supabase. Salin <code>.env.example</code> menjadi{" "}
+                Belum ada konfigurasi Supabase. Salin <code>.env.example</code> menjadi{" "}
                 <code>.env.local</code> lalu isi URL & anon key project Anda.
               </p>
             )}

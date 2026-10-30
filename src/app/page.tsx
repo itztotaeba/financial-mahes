@@ -4,7 +4,7 @@
  * Halaman Dashboard — grid utama sesuai referensi Casha:
  * [Kartu Ringkasan] → [Red Flag] → [Cashflow 30 hari | Wawasan Kategori] → [Transaksi Terakhir].
  */
-import { Plus, ArrowRight } from "lucide-react";
+import { Plus, ArrowRight, ReceiptText, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { SummaryCards } from "@/components/dashboard/SummaryCards";
@@ -40,20 +40,20 @@ export default function DashboardPage() {
       />
 
       {!hydrated ? (
-        <div className="grid min-h-[50vh] place-items-center text-sm text-black/40">
+        <div className="grid min-h-[50vh] place-items-center text-sm text-muted-ink">
           Memuat data lokal…
         </div>
       ) : (
         <div className="space-y-4 pb-20 lg:pb-4">
           {/* Papan sambutan untuk akun cloud yang belum punya catatan */}
           {isEmpty && (
-            <Card className="border border-[#2141E0]/20 bg-gradient-to-r from-[#2141E0]/[0.06] via-[#C8ACC0]/[0.10] to-[#4FB279]/[0.06]">
+            <Card className="border-primary/15 bg-gradient-to-r from-primary/[0.07] via-lilac/[0.14] to-income/[0.07]">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
-                  <h2 className="text-base font-extrabold tracking-tight text-[#151516]">
-                    {userId ? `Halo, ${email?.split("@")[0]}! 👋` : "Selamat datang di Financial Mahes 👋"}
+                  <h2 className="text-base font-extrabold tracking-tight text-ink">
+                    {userId ? `Halo, ${email?.split("@")[0]}!` : "Selamat datang di Financial Mahes"}
                   </h2>
-                  <p className="mt-1 max-w-xl text-sm leading-relaxed text-black/55">
+                  <p className="mt-1 max-w-xl text-sm leading-relaxed text-ink/60">
                     Setiap rupiah punya cerita. Mulai catat pengeluaran & pemasukan pertamamu hari
                     ini — dalam 30 detik, grafik dan wawasan keuanganmu langsung hidup.
                   </p>
@@ -88,8 +88,8 @@ export default function DashboardPage() {
           <Card>
             <div className="mb-3 flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-base font-bold text-[#151516]">Transaksi Terakhir</h2>
-                <p className="text-xs text-black/45">7 aktivitas terbaru</p>
+                <h2 className="text-base font-bold text-ink">Transaksi Terakhir</h2>
+                <p className="text-xs text-muted-ink">7 aktivitas terbaru</p>
               </div>
               <div className="flex items-center gap-2">
                 <Link href="/transaksi">
@@ -107,7 +107,7 @@ export default function DashboardPage() {
             {recent.length === 0 ? (
               <EmptyState
                 compact
-                icon={<span aria-hidden>🧾</span>}
+                icon={<ReceiptText size={26} />}
                 title="Belum ada aktivitas tercatat"
                 description="Catatan kecilmu hari ini adalah data besar untuk keputusan besok. Ayo mulai!"
                 actionLabel="Catat Transaksi Pertama"

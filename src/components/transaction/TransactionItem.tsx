@@ -2,7 +2,7 @@
 
 /**
  * Baris transaksi yang dipakai di Dashboard (daftar terakhir) dan halaman Transaksi.
- * Menampilkan emoji kategori, catatan, tanggal, nominal berwarna + aksi edit/hapus.
+ * Menampilkan ikon kategori (lucide), catatan, tanggal, nominal berwarna + aksi edit/hapus.
  */
 import { Pencil, Trash2 } from "lucide-react";
 import type { Transaction } from "@/types";
@@ -22,21 +22,19 @@ export function TransactionItem({
   const isIncome = tx.type === "income";
 
   return (
-    <div className="group flex items-center gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-black/[0.03]">
-      {/* Ikon kategori */}
+    <div className="group flex items-center gap-3 rounded-2xl px-2 py-2.5 transition-colors hover:bg-white/60">
+      {/* Ikon kategori — tile kaca dengan warna kategori */}
       <span
-        className={cn(
-          "grid h-10 w-10 shrink-0 place-items-center rounded-full text-lg",
-          isIncome ? "bg-[#4FB279]/15" : "bg-[#D3534C]/10"
-        )}
+        className="glass-chip !gap-0 grid h-10 w-10 shrink-0 place-items-center rounded-2xl"
+        style={{ backgroundColor: `${cat.color}1f`, color: cat.color }}
       >
-        {cat.emoji}
+        <cat.icon size={18} strokeWidth={2.2} />
       </span>
 
       {/* Detail */}
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold text-[#151516]">{tx.note || cat.label}</p>
-        <p className="mt-0.5 truncate text-xs text-black/45">
+        <p className="truncate text-sm font-semibold text-ink">{tx.note || cat.label}</p>
+        <p className="mt-0.5 truncate text-xs text-muted-ink">
           {cat.label} · {formatDate(tx.date)}
         </p>
       </div>
@@ -45,7 +43,7 @@ export function TransactionItem({
       <p
         className={cn(
           "shrink-0 text-sm font-bold tabular-nums",
-          isIncome ? "text-[#4FB279]" : "text-[#D3534C]"
+          isIncome ? "text-income" : "text-expense"
         )}
       >
         {isIncome ? "+" : "−"}
@@ -58,7 +56,7 @@ export function TransactionItem({
           {onEdit && (
             <button
               onClick={() => onEdit(tx)}
-              className="grid h-8 w-8 place-items-center rounded-lg text-black/40 hover:bg-[#2141E0]/10 hover:text-[#2141E0]"
+              className="grid h-8 w-8 place-items-center rounded-lg text-muted-ink hover:bg-primary/10 hover:text-primary"
               aria-label="Edit transaksi"
             >
               <Pencil size={14} />
@@ -67,7 +65,7 @@ export function TransactionItem({
           {onDelete && (
             <button
               onClick={() => onDelete(tx.id)}
-              className="grid h-8 w-8 place-items-center rounded-lg text-black/40 hover:bg-[#D3534C]/10 hover:text-[#D3534C]"
+              className="grid h-8 w-8 place-items-center rounded-lg text-muted-ink hover:bg-expense/10 hover:text-expense"
               aria-label="Hapus transaksi"
             >
               <Trash2 size={14} />

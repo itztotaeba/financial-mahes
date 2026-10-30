@@ -4,6 +4,7 @@
  * Halaman Laporan: tren bulanan (bar chart) + tabel rekap per kategori.
  */
 import { useMemo } from "react";
+import { TrendingUp } from "lucide-react";
 import {
   ResponsiveContainer,
   BarChart,
@@ -68,7 +69,7 @@ export default function LaporanPage() {
       <Header title="Laporan" subtitle="Analisa bulanan & perilaku belanja" onMenuClick={openMobileMenu} />
 
       {!hydrated ? (
-        <div className="grid min-h-[50vh] place-items-center text-sm text-black/40">
+        <div className="grid min-h-[50vh] place-items-center text-sm text-muted-ink">
           Memuat data lokal…
         </div>
       ) : (
@@ -77,7 +78,7 @@ export default function LaporanPage() {
           {transactions.length === 0 && (
             <Card>
               <EmptyState
-                icon={<span aria-hidden>📈</span>}
+                icon={<TrendingUp size={26} />}
                 title="Laporan menanti datamu"
                 description="Setelah beberapa transaksi tercatat, analisa bulanan dan rekap kategori akan muncul di sini secara otomatis."
                 actionLabel="Mulai Mencatat"
@@ -88,8 +89,8 @@ export default function LaporanPage() {
 
           {/* Tren bulanan */}
           <Card>
-            <h2 className="text-base font-bold text-[#151516]">Tren Bulanan</h2>
-            <p className="mb-4 text-xs text-black/45">Pemasukan vs pengeluaran per bulan</p>
+            <h2 className="text-base font-bold text-ink">Tren Bulanan</h2>
+            <p className="mb-4 text-xs text-muted-ink">Pemasukan vs pengeluaran per bulan</p>
             <div className="h-64 w-full sm:h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={monthly} margin={{ top: 4, right: 4, left: -4, bottom: 0 }}>
@@ -126,13 +127,13 @@ export default function LaporanPage() {
 
           {/* Tabel rekap kategori */}
           <Card>
-            <h2 className="mb-1 text-base font-bold text-[#151516]">Rekap per Kategori</h2>
-            <p className="mb-4 text-xs text-black/45">Total nominal sepanjang periode tercatat</p>
+            <h2 className="mb-1 text-base font-bold text-ink">Rekap per Kategori</h2>
+            <p className="mb-4 text-xs text-muted-ink">Total nominal sepanjang periode tercatat</p>
 
             <div className="overflow-x-auto">
               <table className="w-full min-w-[480px] text-left text-sm">
                 <thead>
-                  <tr className="border-b border-black/10 text-xs uppercase tracking-wide text-black/45">
+                  <tr className="border-b border-black/10 text-xs uppercase tracking-wide text-muted-ink">
                     <th className="py-2.5 pr-3 font-semibold">Kategori</th>
                     <th className="py-2.5 pr-3 text-right font-semibold">Transaksi</th>
                     <th className="py-2.5 pr-3 text-right font-semibold">Pemasukan</th>
@@ -145,21 +146,21 @@ export default function LaporanPage() {
                     return (
                       <tr key={row.key} className="hover:bg-black/[0.02]">
                         <td className="py-3 pr-3">
-                          <span className="flex items-center gap-2 font-semibold text-[#151516]">
+                          <span className="flex items-center gap-2 font-semibold text-ink">
                             <span
                               className="h-2.5 w-2.5 rounded-full"
                               style={{ backgroundColor: info.color }}
                             />
-                            {info.emoji} {info.label}
+                            {info.label}
                           </span>
                         </td>
-                        <td className="py-3 pr-3 text-right tabular-nums text-black/60">
+                        <td className="py-3 pr-3 text-right tabular-nums text-muted-ink">
                           {row.count}
                         </td>
-                        <td className="py-3 pr-3 text-right font-semibold tabular-nums text-[#4FB279]">
+                        <td className="py-3 pr-3 text-right font-semibold tabular-nums text-income">
                           {row.income > 0 ? formatIDR(row.income) : "—"}
                         </td>
-                        <td className="py-3 text-right font-semibold tabular-nums text-[#D3534C]">
+                        <td className="py-3 text-right font-semibold tabular-nums text-expense">
                           {row.expense > 0 ? formatIDR(row.expense) : "—"}
                         </td>
                       </tr>

@@ -55,13 +55,13 @@ export default function PengaturanPage() {
       <Header title="Pengaturan" subtitle="Akun, sinkronisasi & data" onMenuClick={openMobileMenu} />
 
       {!hydrated ? (
-        <div className="grid min-h-[50vh] place-items-center text-sm text-black/40">
+        <div className="grid min-h-[50vh] place-items-center text-sm text-muted-ink">
           Memuat data lokal…
         </div>
       ) : (
         <div className="max-w-2xl space-y-4 pb-20 lg:pb-4">
           {message && (
-            <div className="rounded-xl bg-[#2141E0]/10 px-4 py-3 text-sm font-semibold text-[#2141E0]">
+            <div className="rounded-xl bg-primary/10 px-4 py-3 text-sm font-semibold text-primary">
               {message}
             </div>
           )}
@@ -69,12 +69,12 @@ export default function PengaturanPage() {
           {/* Status penyimpanan lokal */}
           <Card>
             <div className="flex items-start gap-3">
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#C8ACC0]/25 text-[#C8ACC0]">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-lilac/25 text-[#C8ACC0]">
                 <Database size={18} className="text-[#8f6f87]" />
               </span>
               <div className="min-w-0 flex-1">
-                <h2 className="text-sm font-bold text-[#151516]">Penyimpanan Lokal</h2>
-                <p className="mt-0.5 text-xs text-black/50">
+                <h2 className="text-sm font-bold text-ink">Penyimpanan Lokal</h2>
+                <p className="mt-0.5 text-xs text-muted-ink">
                   {transactions.length} transaksi tersimpan di browser · total{" "}
                   {formatIDR(transactions.reduce((a, t) => a + t.amount, 0))} dicatat.
                 </p>
@@ -90,26 +90,31 @@ export default function PengaturanPage() {
           {/* Akun & sinkronisasi cloud */}
           <Card>
             <div className="flex items-start gap-3">
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#2141E0]/10">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/10">
                 {userId ? (
-                  <CloudUpload size={18} className="text-[#2141E0]" />
+                  <CloudUpload size={18} className="text-primary" />
                 ) : (
-                  <WifiOff size={18} className="text-black/40" />
+                  <WifiOff size={18} className="text-muted-ink" />
                 )}
               </span>
               <div className="min-w-0 flex-1">
-                <h2 className="text-sm font-bold text-[#151516]">
+                <h2 className="text-sm font-bold text-ink">
                   {userId ? `Login sebagai ${email}` : "Belum login"}
                 </h2>
-                <p className="mt-0.5 text-xs text-black/50">
-                  {userId
-                    ? pushPending
-                      ? "Ada perubahan lokal yang belum berhasil dikirim ke cloud. Coba sync ulang."
-                      : "Setiap perubahan otomatis dikirim ke Supabase."
-                    : isSupabaseConfigured()
-                      ? "Login untuk mencadangkan dan menyinkronkan data ke cloud."
-                      : "Supabase belum dikonfigurasi — isi NEXT_PUBLIC_SUPABASE_URL & ANON KEY di .env.local."}
+                {/* UX: user login sudah paham mekanisme auto-sync, jadi tidak ada
+                    pengumuman "tersinkron ke cloud". Status hanya ditampilkan bila
+                    memang ada masalah (antrian sync gagal). */}
+                <p className="mt-0.5 text-xs text-muted-ink">
+                  {!userId &&
+                    (isSupabaseConfigured()
+                      ? "Login untuk menyimpan data Anda dengan aman di cloud."
+                      : "Supabase belum dikonfigurasi — isi NEXT_PUBLIC_SUPABASE_URL & ANON KEY di .env.local.")}
                 </p>
+                {userId && pushPending && (
+                  <div className="mt-2 rounded-xl bg-expense/10 px-3 py-2 text-xs font-semibold text-expense">
+                    Ada perubahan yang belum terkirim. Coba sync ulang.
+                  </div>
+                )}
 
                 <div className="mt-3 flex flex-wrap gap-2">
                   {userId ? (
@@ -138,10 +143,9 @@ export default function PengaturanPage() {
           </Card>
 
           {/* Tentang */}
-          <Card className="text-xs leading-relaxed text-black/50">
-            <b className="text-[#151516]">Financial Mahes</b> memakai arsitektur{" "}
-            <i>local-first</i>: data utama selalu aman di browser Anda. Sinkronisasi cloud bersifat
-            opsional dan hanya terjadi setelah Anda login melalui Supabase.
+          <Card className="text-xs leading-relaxed text-muted-ink">
+            <b className="text-ink">Financial Mahes</b> — tracker keuangan pribadi yang cepat,
+            rapi, dan tetap bekerja tanpa internet.
           </Card>
         </div>
       )}
