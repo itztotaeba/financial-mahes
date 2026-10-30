@@ -201,9 +201,11 @@ export default function DashboardPage() {
                     >
                       <TransactionItem
                         tx={tx}
+                        compact
                         onEdit={(t) => window.openTransactionModal?.(t)}
                         onDelete={(id) => {
-                          if (confirm("Hapus transaksi ini?")) deleteTransaction(id);
+                          // Konfirmasi sebelum hapus (memanggil action store deleteTransaction).
+                          if (window.confirm("Hapus transaksi ini?")) deleteTransaction(id);
                         }}
                       />
                     </li>
