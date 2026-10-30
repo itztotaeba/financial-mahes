@@ -50,25 +50,26 @@ export function TransactionItem({
         {formatIDR(tx.amount)}
       </p>
 
-      {/* Aksi */}
+      {/* Aksi — SELALU tampil di mobile (tablet ke bawah) sebagai icon-button;
+          di desktop muncul halus saat hover baris. Tidak perlu long-press lagi. */}
       {(onEdit || onDelete) && (
-        <div className="flex shrink-0 gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+        <div className="flex shrink-0 gap-1 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
           {onEdit && (
             <button
               onClick={() => onEdit(tx)}
-              className="grid h-8 w-8 place-items-center rounded-lg text-muted-ink hover:bg-primary/10 hover:text-primary"
+              className="grid h-9 w-9 place-items-center rounded-xl text-muted-ink transition-colors hover:bg-primary/10 hover:text-primary active:scale-95"
               aria-label="Edit transaksi"
             >
-              <Pencil size={14} />
+              <Pencil size={15} />
             </button>
           )}
           {onDelete && (
             <button
               onClick={() => onDelete(tx.id)}
-              className="grid h-8 w-8 place-items-center rounded-lg text-muted-ink hover:bg-expense/10 hover:text-expense"
+              className="grid h-9 w-9 place-items-center rounded-xl text-muted-ink transition-colors hover:bg-expense/10 hover:text-expense active:scale-95"
               aria-label="Hapus transaksi"
             >
-              <Trash2 size={14} />
+              <Trash2 size={15} />
             </button>
           )}
         </div>
