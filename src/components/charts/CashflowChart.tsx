@@ -50,7 +50,7 @@ export function CashflowChart({ data }: { data: DayPoint[] }) {
               width={64}
             />
             <Tooltip
-              cursor={{ fill: "#64763708" }}
+              cursor={{ fill: "#2141E008" }}
               contentStyle={{
                 borderRadius: 12,
                 border: "none",
@@ -72,8 +72,8 @@ export function CashflowChart({ data }: { data: DayPoint[] }) {
               iconType="circle"
               iconSize={8}
             />
-            <Bar dataKey="income" fill="#647637" radius={[4, 4, 0, 0]} maxBarSize={10} />
-            <Bar dataKey="expense" fill="#BB622E" radius={[4, 4, 0, 0]} maxBarSize={10} />
+            <Bar dataKey="income" fill="#4FB279" radius={[4, 4, 0, 0]} maxBarSize={10} />
+            <Bar dataKey="expense" fill="#D3534C" radius={[4, 4, 0, 0]} maxBarSize={10} />
           </BarChart>
         </ResponsiveContainer>
       </div>

@@ -1,34 +1,34 @@
 import { forwardRef } from "react";
 import { cn } from "@/lib/utils";
 
-/** Kartu dasar "Fresh Earthy" — putih bersih, radius besar, border halus, shadow tipis. */
+/** Kartu "liquid glass" dasar — permukaan translusen + blur, ala iOS. */
 export const Card = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn("glass-card p-5 sm:p-6", className)}
+      className={cn("glass-card p-5", className)}
       {...props}
     />
   )
 );
 Card.displayName = "Card";
 
-/** Tombol varian: primary (olive), danger (terracotta), ghost, outline. */
+/** Tombol varian: primary (blue), danger (red), ghost, outline. */
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: "primary" | "danger" | "ghost" | "outline";
 };
 
 export function Button({ className, variant = "primary", ...props }: ButtonProps) {
   const variants: Record<string, string> = {
-    primary: "bg-income text-white rounded-xl shadow-soft hover:bg-muted active:scale-[0.98]",
-    danger: "bg-expense text-white rounded-xl shadow-soft hover:bg-[#a2552a]",
+    primary: "bg-primary text-white shadow-glass hover:bg-[#1a34b4]",
+    danger: "bg-expense text-white shadow-glass hover:bg-[#b8443e]",
     ghost: "text-ink hover:bg-black/5",
-    outline: "rounded-xl border border-line bg-white px-4 py-2 text-ink hover:bg-[#FAFAF9]",
+    outline: "glass-pill !shadow-none px-4 py-2 text-ink hover:bg-white/80",
   };
   return (
     <button
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50",
+        "inline-flex items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition-all active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50",
         variants[variant],
         className
       )}
@@ -63,7 +63,7 @@ export const Input = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTML
     <input
       ref={ref}
       className={cn(
-        "w-full rounded-xl border border-line bg-white px-3.5 py-2.5 text-sm text-ink outline-none transition placeholder:text-muted-ink focus:border-income/60 focus:bg-white focus:ring-2 focus:ring-income/15",
+        "w-full rounded-2xl border border-white/70 bg-white/80 px-3.5 py-2.5 text-sm text-ink shadow-inner outline-none backdrop-blur-md transition placeholder:text-muted-ink focus:border-primary/50 focus:bg-white focus:ring-2 focus:ring-primary/20",
         className
       )}
       {...props}

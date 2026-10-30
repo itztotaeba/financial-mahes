@@ -94,10 +94,10 @@ export function TransactionModal({ open, editing, onClose }: Props) {
       <div className="absolute inset-0 bg-black/35 backdrop-blur-md" onClick={onClose} aria-hidden />
 
       {/* Sheet liquid glass: bening di mobile (sheet), mengambang di desktop */}
-      <div className="relative max-h-[92vh] w-full max-w-md overflow-y-auto rounded-t-3xl border border-line bg-white p-6 shadow-soft-lg thin-scrollbar sm:rounded-3xl">
+      <div className="glass-card relative max-h-[92vh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-white/78 p-6 shadow-glass-lg saturate-150 thin-scrollbar sm:rounded-3xl">
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full border border-line bg-white text-ink hover:bg-[#FAFAF9]"
+          className="glass-pill absolute right-4 top-4 grid h-9 w-9 place-items-center !shadow-none text-ink hover:bg-white/80"
           aria-label="Tutup"
         >
           <X size={16} />
@@ -112,7 +112,7 @@ export function TransactionModal({ open, editing, onClose }: Props) {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Toggle tipe */}
-          <div className="grid grid-cols-2 gap-2 rounded-xl bg-[#F7F7F5] p-1.5 border border-line">
+          <div className="grid grid-cols-2 gap-2 rounded-xl bg-white/50 p-1.5">
             {(["expense", "income"] as const).map((t) => (
               <button
                 key={t}
@@ -164,8 +164,8 @@ export function TransactionModal({ open, editing, onClose }: Props) {
                     className={cn(
                       "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all active:scale-[0.97]",
                       active
-                        ? "border-transparent text-white shadow-soft"
-                        : "border-line bg-white text-ink/60 hover:bg-[#FAFAF9]"
+                        ? "border-transparent text-white shadow-glass"
+                        : "border-white/70 bg-white/70 text-ink/60 backdrop-blur-md hover:bg-white"
                     )}
                     style={active ? { backgroundColor: info.color } : undefined}
                   >
