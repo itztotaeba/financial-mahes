@@ -42,7 +42,7 @@ export function TransactionItem({
       {/* Nominal */}
       <p
         className={cn(
-          "shrink-0 text-sm font-bold tabular-nums",
+          "font-data shrink-0 text-sm font-bold tabular-nums",
           isIncome ? "text-income" : "text-expense"
         )}
       >

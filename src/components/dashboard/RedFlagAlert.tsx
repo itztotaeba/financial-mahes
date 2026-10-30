@@ -28,8 +28,8 @@ export function RedFlagAlert({ summary }: { summary: Summary }) {
             </div>
             <p className="mt-1 text-sm text-ink/70">
               Bulan ini Anda menghabiskan{" "}
-              <b className="text-expense">{formatIDR(summary.monthExpense)}</b> dari pemasukan{" "}
-              <b className="text-income">{formatIDR(summary.monthIncome)}</b>. Idealnya pengeluaran
+              <b className="font-data text-expense">{formatIDR(summary.monthExpense)}</b> dari pemasukan{" "}
+              <b className="font-data text-income">{formatIDR(summary.monthIncome)}</b>. Idealnya pengeluaran
               di bawah 80% agar dana tetap bertumbuh.
             </p>
           </div>

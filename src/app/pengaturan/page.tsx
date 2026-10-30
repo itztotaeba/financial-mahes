@@ -75,8 +75,12 @@ export default function PengaturanPage() {
               <div className="min-w-0 flex-1">
                 <h2 className="text-sm font-bold text-ink">Penyimpanan Lokal</h2>
                 <p className="mt-0.5 text-xs text-muted-ink">
-                  {transactions.length} transaksi tersimpan di browser · total{" "}
-                  {formatIDR(transactions.reduce((a, t) => a + t.amount, 0))} dicatat.
+                  <span className="font-data">{transactions.length}</span> transaksi tersimpan di
+                  browser · total{" "}
+                  <span className="font-data font-semibold text-ink">
+                    {formatIDR(transactions.reduce((a, t) => a + t.amount, 0))}
+                  </span>{" "}
+                  dicatat.
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <Button variant="danger" onClick={handleReset} className="px-3 text-xs">

@@ -130,7 +130,7 @@ export function TransactionModal({ open, editing, onClose }: Props) {
               <Input
                 inputMode="numeric"
                 placeholder="0"
-                className="pl-9 font-semibold tabular-nums"
+                className="font-data pl-9 font-semibold tabular-nums"
                 value={amount ? Number(amount.replace(/[^\d]/g, "")).toLocaleString("id-ID") : ""}
                 onChange={(e) => setAmount(e.target.value.replace(/[^\d]/g, ""))}
               />

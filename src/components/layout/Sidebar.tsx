@@ -32,7 +32,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
               "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition-all active:scale-[0.98]",
               active
                 ? "bg-primary text-white shadow-glass"
-                : "text-ink/70 hover:bg-white/60 hover:text-ink"
+                : "border border-transparent text-ink/70 hover:border-white/60 hover:bg-white/55 hover:text-ink hover:shadow-glass backdrop-blur-xl"
             )}
           >
             <Icon size={18} strokeWidth={2.2} />
@@ -47,7 +47,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
 /** Brand — tagline dibuat lebih "bernyawa", bukan label generik. */
 function Brand() {
   return (
-    <div className="mb-8 flex items-center gap-3 px-2">
+    <div className="mb-6 flex items-center gap-3 px-2 pb-6" style={{ borderBottom: "1px solid rgba(255,255,255,.6)", boxShadow: "0 1px 0 rgba(21,21,22,.04)" }}>
       <div className="grid h-10 w-10 place-items-center rounded-2xl bg-gradient-to-br from-primary to-[#4f6bff] text-white shadow-glass-lg ring-1 ring-white/40">
         <Wallet size={20} strokeWidth={2.4} />
       </div>

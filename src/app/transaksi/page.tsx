@@ -128,9 +128,9 @@ export default function TransaksiPage() {
             </div>
 
             <p className="text-xs text-muted-ink">
-              Menampilkan <b>{filtered.length}</b> transaksi · Pemasukan{" "}
-              <b className="text-income">{formatIDR(filteredTotals.income)}</b> · Pengeluaran{" "}
-              <b className="text-expense">{formatIDR(filteredTotals.expense)}</b>
+              Menampilkan <b className="font-data">{filtered.length}</b> transaksi · Pemasukan{" "}
+              <b className="font-data text-income">{formatIDR(filteredTotals.income)}</b> · Pengeluaran{" "}
+              <b className="font-data text-expense">{formatIDR(filteredTotals.expense)}</b>
             </p>
           </Card>
 

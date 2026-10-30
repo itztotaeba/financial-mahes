@@ -36,7 +36,7 @@ export function CashflowChart({ data }: { data: DayPoint[] }) {
             <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#00000010" />
             <XAxis
               dataKey="label"
-              tick={{ fontSize: 11, fill: "#151516", opacity: 0.5 }}
+              tick={{ fontSize: 11, fill: "#151516", opacity: 0.5, fontFamily: "var(--font-data)" }}
               axisLine={false}
               tickLine={false}
               interval="preserveStartEnd"
@@ -44,7 +44,7 @@ export function CashflowChart({ data }: { data: DayPoint[] }) {
             />
             <YAxis
               tickFormatter={(v: number) => formatIDRCompact(v)}
-              tick={{ fontSize: 11, fill: "#151516", opacity: 0.5 }}
+              tick={{ fontSize: 11, fill: "#151516", opacity: 0.5, fontFamily: "var(--font-data)" }}
               axisLine={false}
               tickLine={false}
               width={64}

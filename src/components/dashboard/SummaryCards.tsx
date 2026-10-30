@@ -20,7 +20,7 @@ export function SummaryCards({ summary }: { summary: Summary }) {
             <Wallet size={16} className="text-lilac" />
           </span>
         </div>
-        <p className="mt-3 text-2xl font-extrabold tracking-tight sm:text-3xl">
+        <p className="font-data mt-3 text-2xl font-extrabold tracking-tight sm:text-3xl">
           {formatIDR(summary.balance)}
         </p>
         <p className="mt-1 text-xs text-white/45">Akumulasi seluruh transaksi tercatat</p>
@@ -34,11 +34,11 @@ export function SummaryCards({ summary }: { summary: Summary }) {
             <TrendingUp size={16} className="text-income" />
           </span>
         </div>
-        <p className="mt-3 text-2xl font-extrabold tracking-tight text-income sm:text-3xl">
+        <p className="font-data mt-3 text-2xl font-extrabold tracking-tight text-income sm:text-3xl">
           {formatIDR(summary.totalIncome)}
         </p>
         <p className="mt-1 text-xs text-muted-ink">
-          Bulan ini: <span className="font-semibold text-ink">{formatIDR(summary.monthIncome)}</span>
+          Bulan ini: <span className="font-data font-semibold text-ink">{formatIDR(summary.monthIncome)}</span>
         </p>
       </Card>
 
@@ -50,11 +50,11 @@ export function SummaryCards({ summary }: { summary: Summary }) {
             <TrendingDown size={16} className="text-expense" />
           </span>
         </div>
-        <p className="mt-3 text-2xl font-extrabold tracking-tight text-expense sm:text-3xl">
+        <p className="font-data mt-3 text-2xl font-extrabold tracking-tight text-expense sm:text-3xl">
           {formatIDR(summary.totalExpense)}
         </p>
         <p className="mt-1 text-xs text-muted-ink">
-          Bulan ini: <span className="font-semibold text-ink">{formatIDR(summary.monthExpense)}</span>
+          Bulan ini: <span className="font-data font-semibold text-ink">{formatIDR(summary.monthExpense)}</span>
         </p>
       </Card>
     </div>
