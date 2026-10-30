@@ -22,10 +22,10 @@ export function CashflowChart({ data }: { data: DayPoint[] }) {
     <Card className="h-full">
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h2 className="text-base font-bold text-[#151516]">Arus Kas</h2>
-          <p className="text-xs text-black/45">Tren harian · 30 hari terakhir</p>
+          <h2 className="text-base font-bold text-ink">Arus Kas</h2>
+          <p className="text-xs text-muted-ink">Tren harian · 30 hari terakhir</p>
         </div>
-        <span className="rounded-full bg-[#2141E0]/10 px-3 py-1 text-xs font-semibold text-[#2141E0]">
+        <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
           Harian
         </span>
       </div>
@@ -65,7 +65,7 @@ export function CashflowChart({ data }: { data: DayPoint[] }) {
             />
             <Legend
               formatter={(value) => (
-                <span className="text-xs font-medium text-[#151516]">
+                <span className="text-xs font-medium text-ink">
                   {value === "income" ? "Pemasukan" : "Pengeluaran"}
                 </span>
               )}

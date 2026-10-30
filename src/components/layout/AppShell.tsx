@@ -42,7 +42,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#F6F6F6] text-[#151516]">
+    <div className="min-h-screen text-ink">
       <div className="mx-auto flex max-w-[1400px] gap-6 px-4 py-6 sm:px-6 lg:px-8">
         <DesktopSidebar />
         <MobileSidebar open={mobileOpen} onClose={() => setMobileOpen(false)} />

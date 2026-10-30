@@ -29,25 +29,25 @@ export function Header({
         {/* Tombol menu hanya tampil di mobile */}
         <button
           onClick={onMenuClick}
-          className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-[#151516] ring-1 ring-black/5 lg:hidden"
+          className="glass-pill grid h-10 w-10 shrink-0 place-items-center text-ink lg:hidden"
           aria-label="Buka menu"
         >
           <Menu size={18} />
         </button>
         <div className="min-w-0">
-          <h1 className="truncate text-xl font-extrabold text-[#151516] sm:text-2xl">{title}</h1>
-          {subtitle && <p className="truncate text-sm text-black/45">{subtitle}</p>}
+          <h1 className="truncate text-xl font-extrabold text-ink sm:text-2xl">{title}</h1>
+          {subtitle && <p className="truncate text-sm text-muted-ink">{subtitle}</p>}
         </div>
       </div>
 
       <div className="flex shrink-0 items-center gap-2 sm:gap-3">
         {email ? (
           <>
-            <div className="hidden items-center gap-2 rounded-full bg-white py-1 pl-1 pr-3 ring-1 ring-black/5 sm:flex">
-              <span className="grid h-8 w-8 place-items-center rounded-full bg-[#C8ACC0] text-sm font-bold text-white">
+            <div className="glass-pill hidden items-center gap-2 py-1 pl-1 pr-3 sm:flex">
+              <span className="grid h-8 w-8 place-items-center rounded-full bg-lilac text-sm font-bold text-white">
                 {email[0].toUpperCase()}
               </span>
-              <span className="max-w-[160px] truncate text-xs font-semibold text-[#151516]">
+              <span className="max-w-[160px] truncate text-xs font-semibold text-ink">
                 {email}
               </span>
             </div>
@@ -75,7 +75,7 @@ export function Header({
         )}
         {/* Avatar kecil pada mobile saat sudah login */}
         {email && (
-          <span className="grid h-9 w-9 place-items-center rounded-full bg-[#C8ACC0] text-sm font-bold text-white sm:hidden">
+          <span className="grid h-9 w-9 place-items-center rounded-full bg-lilac text-sm font-bold text-white shadow-glass sm:hidden">
             <UserRound size={16} />
           </span>
         )}

@@ -84,22 +84,22 @@ export function TransactionModal({ open, editing, onClose }: Props) {
       <div className="relative w-full max-w-md rounded-t-3xl bg-white p-6 shadow-2xl sm:rounded-3xl">
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full bg-black/5 text-[#151516] hover:bg-black/10"
+          className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full bg-black/5 text-ink hover:bg-black/10"
           aria-label="Tutup"
         >
           <X size={16} />
         </button>
 
-        <h2 className="text-lg font-extrabold text-[#151516]">
+        <h2 className="text-lg font-extrabold text-ink">
           {editing ? "Edit Transaksi" : "Tambah Transaksi"}
         </h2>
-        <p className="mb-5 mt-0.5 text-xs text-black/45">
+        <p className="mb-5 mt-0.5 text-xs text-muted-ink">
           Data tersimpan otomatis {useFinanceStore.getState().userId ? "ke cloud & lokal" : "secara lokal"}.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Toggle tipe */}
-          <div className="grid grid-cols-2 gap-2 rounded-xl bg-[#F6F6F6] p-1.5">
+          <div className="grid grid-cols-2 gap-2 rounded-xl bg-white/50 p-1.5">
             {(["expense", "income"] as const).map((t) => (
               <button
                 key={t}
@@ -109,9 +109,9 @@ export function TransactionModal({ open, editing, onClose }: Props) {
                   "rounded-lg py-2.5 text-sm font-bold transition-all",
                   type === t
                     ? t === "income"
-                      ? "bg-[#4FB279] text-white shadow"
-                      : "bg-[#D3534C] text-white shadow"
-                    : "text-black/50 hover:text-black"
+                      ? "bg-income text-white shadow"
+                      : "bg-expense text-white shadow"
+                    : "text-muted-ink hover:text-black"
                 )}
               >
                 {t === "income" ? "Pemasukan" : "Pengeluaran"}
@@ -123,7 +123,7 @@ export function TransactionModal({ open, editing, onClose }: Props) {
           <div>
             <Label>Nominal (Rupiah)</Label>
             <div className="relative">
-              <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-semibold text-black/40">
+              <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-semibold text-muted-ink">
                 Rp
               </span>
               <Input
@@ -149,14 +149,14 @@ export function TransactionModal({ open, editing, onClose }: Props) {
                     type="button"
                     onClick={() => setCategory(c)}
                     className={cn(
-                      "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all",
+                      "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all active:scale-[0.97]",
                       active
-                        ? "border-transparent text-white shadow"
-                        : "border-black/10 bg-white text-black/60 hover:border-black/25"
+                        ? "border-transparent text-white shadow-glass"
+                        : "border-white/70 bg-white/70 text-ink/60 backdrop-blur-md hover:bg-white"
                     )}
                     style={active ? { backgroundColor: info.color } : undefined}
                   >
-                    <span>{info.emoji}</span>
+                    <info.icon size={14} strokeWidth={2.2} style={{ color: active ? "#fff" : info.color }} />
                     {info.label}
                   </button>
                 );
@@ -181,7 +181,7 @@ export function TransactionModal({ open, editing, onClose }: Props) {
             </div>
           </div>
 
-          {error && <p className="text-xs font-semibold text-[#D3534C]">{error}</p>}
+          {error && <p className="text-xs font-semibold text-expense">{error}</p>}
 
           <div className="flex gap-3 pt-2">
             <Button type="button" variant="outline" className="flex-1" onClick={onClose}>
