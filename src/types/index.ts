@@ -10,8 +10,10 @@ export interface Transaction {
   type: TransactionType;
   amount: number; // Nominal dalam Rupiah (positif)
   category: string; // Kunci kategori, lihat CATEGORY_MAP
-  date: string; // Format ISO date (YYYY-MM-DD)
+  date: string; // Tanggal transaksi — format "YYYY-MM-DDTHH:mm" (local datetime)
   note: string; // Catatan opsional
+  /** Waktu input (ISO) — dipakai untuk urutan daftar "terbaru diinput". */
+  inputted_at?: string;
   created_at?: string;
   updated_at?: string;
 }

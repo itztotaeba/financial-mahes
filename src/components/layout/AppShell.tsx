@@ -58,13 +58,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
     (async () => {
       try {
-        const { createClient } = await import("@supabase/supabase-js");
-        const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-        const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-        if (!url || !key) return;
-        const sb = createClient(url, key, {
-          auth: { persistSession: true, autoRefreshToken: true },
-        });
+        // PAKAI SINGLETON yang sama dengan store — bukan createClient baru.
+        // (Instance ganda memicu warning GoTrueClient "Multiple instances"
+        //  dan bisa membuat refresh token saling menimpa.)
+        const { getSupabaseClient } = await import("@/lib/supabaseClient");
+        let sb: ReturnType<typeof getSupabaseClient>;
+        try {
+          sb = getSupabaseClient();
+        } catch {
+          return; // env belum diisi -> realtime dilewati
+        }
         channel = sb
           .channel(`transactions:${userId}`)
           .on(
@@ -85,11 +88,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
       if (channel) {
-        import("@supabase/supabase-js")
-          .then(({ createClient }) => {
-            const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-            const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-            if (url && key) void createClient(url, key).removeChannel(channel!);
+        // Cukup unsubscribe pada instance singleton — JANGAN buat client baru
+        // hanya untuk removeChannel (itu sumber utama peringatan multi-instance).
+        import("@/lib/supabaseClient")
+          .then(({ getSupabaseClient }) => {
+            try {
+              getSupabaseClient().removeChannel(channel!);
+            } catch {
+              /* env hilang -> noop */
+            }
           })
           .catch(() => undefined);
       }

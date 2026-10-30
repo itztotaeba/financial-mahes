@@ -24,14 +24,59 @@ export function formatIDRCompact(value: number): string {
   return formatIDR(value);
 }
 
+/**
+ * Parse string tanggal aplikasi menjadi Date dengan TOLERAN:
+ * - "YYYY-MM-DD"              -> tengah malam lokal
+ * - "YYYY-MM-DDTHH:mm"        -> waktu lokal persis (tanpa pergeseran UTC)
+ * - ISO penuh dgn zona ("...Z", "+07:00") -> sesuai zona tsb
+ - lainnya -> new Date(isi string). Mengembalikan null bila tidak valid.
+ */
+export function parseDate(iso: string): Date | null {
+  if (!iso || typeof iso !== "string") return null;
+  let d: Date;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) {
+    d = new Date(`${iso}T00:00:00`); // tanpa Z -> zona lokal, aman DST
+  } else if (/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/.test(iso) && !/[zZ+]/.test(iso.slice(10))) {
+    d = new Date(iso.replace(" ", "T")); // local datetime "YYYY-MM-DDTHH:mm"
+  } else {
+    d = new Date(iso);
+  }
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+/** Ambil bagian tanggal "YYYY-MM-DD" dari string manapun yang didukung. */
+export function dateOnly(iso: string): string {
+  const d = parseDate(iso);
+  if (!d) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
 /** Format tanggal panjang: "Sen, 27 Okt 2026". */
 export function formatDate(iso: string): string {
-  return new Date(`${iso}T00:00:00`).toLocaleDateString("id-ID", {
+  const d = parseDate(iso);
+  if (!d) return "-";
+  return d.toLocaleDateString("id-ID", {
     weekday: "short",
     day: "numeric",
     month: "short",
     year: "numeric",
   });
+}
+
+/** Format tanggal + jam: "Sen, 27 Okt 2026 · 14.30". */
+export function formatDateTime(iso: string): string {
+  const d = parseDate(iso);
+  if (!d) return "-";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${formatDate(iso)} · ${pad(d.getHours())}.${pad(d.getMinutes())}`;
+}
+
+/** Nilai default input <input type="datetime-local"> untuk "sekarang". */
+export function nowLocalInput(): string {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 /** Tanggal ISO (YYYY-MM-DD) lokal — hindari pergeseran zona waktu UTC. */
