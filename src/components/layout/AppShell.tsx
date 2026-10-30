@@ -45,7 +45,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen text-ink">
       {/* Padding atas lebih lega (pt-8 sm:pt-10) — judul tidak lagi mepet
           ke tepi atas browser; ruang bawah ekstra untuk FAB mobile. */}
-      <div className="mx-auto flex max-w-[1400px] gap-6 px-4 pb-24 pt-8 sm:px-6 sm:pt-10 lg:px-8 lg:pb-8">
+      <div className="mx-auto flex max-w-[1400px] gap-6 px-4 pb-24 pt-8 sm:px-6 sm:pt-10 lg:gap-9 lg:px-10 lg:pb-8 xl:pt-12">
         <DesktopSidebar />
         <MobileSidebar open={mobileOpen} onClose={() => setMobileOpen(false)} />
         <main className="min-w-0 flex-1">{children}</main>

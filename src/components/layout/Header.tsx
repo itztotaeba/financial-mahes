@@ -24,7 +24,7 @@ export function Header({
   const logout = useFinanceStore((s) => s.logout);
 
   return (
-    <header className="mb-6 flex items-center justify-between gap-4">
+    <header className="mb-7 flex items-center justify-between gap-4 lg:mb-9">
       <div className="flex items-center gap-3 min-w-0">
         {/* Tombol menu hanya tampil di mobile */}
         <button

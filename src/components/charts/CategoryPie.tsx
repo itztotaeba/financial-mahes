@@ -55,7 +55,7 @@ export function CategoryPie({ data }: { data: CategorySlice[] }) {
           <div className="pointer-events-none absolute inset-0 grid place-items-center">
             <div className="text-center">
               <p className="text-[10px] uppercase tracking-wide text-muted-ink">Total</p>
-              <p className="max-w-[90px] truncate text-sm font-extrabold text-ink">
+              <p className="font-data max-w-[90px] truncate text-sm font-extrabold text-ink">
                 {formatIDR(chartData.reduce((a, b) => a + b.value, 0))}
               </p>
             </div>
@@ -73,7 +73,7 @@ export function CategoryPie({ data }: { data: CategorySlice[] }) {
                 />
                 <span className="truncate text-ink/80">{slice.name}</span>
               </span>
-              <span className="shrink-0 font-semibold text-ink">
+              <span className="font-data shrink-0 font-semibold text-ink">
                 {slice.percent ? `${slice.percent.toFixed(0)}%` : "—"}
               </span>
             </li>

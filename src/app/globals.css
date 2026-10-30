@@ -3,45 +3,39 @@
 @tailwind utilities;
 
 /*
-  Plus Jakarta Sans — self-host (latin subset, woff2).
-  Sengaja TIDAK memakai next/font/google: loader @next/font pernah crash
-  di CI Vercel ("Cannot read properties of null (reading '1')") karena
-  fetch metadata Google Fonts. File lokal = build selalu deterministik.
+  Sistem Tipografi Dua Font (refactor):
+  ─────────────────────────────────────────────────────────────
+  • Manrope  → heading, UI umum, tombol, navigasi (class: font-ui / global)
+  • Inter    → KHUSUS tabel, angka (currency/persentase), data mentah
+               (class: font-data — tabular-nums otomatis aktif)
+
+  Keduanya variable font (wght penuh 200..800 / 400..700) agar semua
+  weight Tailwind (font-semibold/bold/extrabold) ter-render presisi.
+
+  CATATAN PENTING (kenapa tidak pakai next/font/google):
+  Build Vercel gagal dengan `TypeError: Cannot read properties of null
+  (reading '1')` di @next/font/dist/google/loader.js — bug internal loader
+  next/font pada Next 14.2.5 ketika fetch metadata Google Fonts gagal/
+  terblokir di environment CI Vercel. Solusi paling andal: self-host file
+  WOFF2 di /public/fonts + @font-face lokal (tanpa network saat build,
+  jadi tidak mungkin error lagi). Equivalent CSS Google Fonts yang dipakai
+  untuk mengunduh file (display=swap sudah tercakup via font-display):
+    https://fonts.googleapis.com/css2?family=Manrope:wght@200..800
+      &family=Inter:opsz,wght@14..32,400..700&display=swap
 */
 @font-face {
-  font-family: "Plus Jakarta Sans";
+  font-family: "Manrope";
   font-style: normal;
-  font-weight: 400;
+  font-weight: 200 800; /* variable axis */
   font-display: swap;
-  src: url("/fonts/plus-jakarta-sans-400.woff2") format("woff2");
+  src: url("/fonts/manrope-var.woff2") format("woff2");
 }
 @font-face {
-  font-family: "Plus Jakarta Sans";
+  font-family: "Inter";
   font-style: normal;
-  font-weight: 500;
+  font-weight: 100 900; /* variable axis (termasuk optical size) */
   font-display: swap;
-  src: url("/fonts/plus-jakarta-sans-500.woff2") format("woff2");
-}
-@font-face {
-  font-family: "Plus Jakarta Sans";
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url("/fonts/plus-jakarta-sans-600.woff2") format("woff2");
-}
-@font-face {
-  font-family: "Plus Jakarta Sans";
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url("/fonts/plus-jakarta-sans-700.woff2") format("woff2");
-}
-@font-face {
-  font-family: "Plus Jakarta Sans";
-  font-style: normal;
-  font-weight: 800;
-  font-display: swap;
-  src: url("/fonts/plus-jakarta-sans-800.woff2") format("woff2");
+  src: url("/fonts/inter-var.woff2") format("woff2");
 }
 
 /*
@@ -60,6 +54,11 @@
   --expense: #d3534c;
   --primary: #2141e0;
   --lilac: #c8acc0;
+
+  /* Token tipografi — dipakai Tailwind (font-ui / font-data) & CSS global.
+     Fallback stack: sistem → generik, agar tetap rapi saat woff2 loading. */
+  --font-ui: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-data: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
 html,
@@ -69,6 +68,8 @@ body {
 
 body {
   color: var(--ink);
+  /* Font global = Manrope (UI umum). Angka/data ditumpangi .font-data → Inter. */
+  font-family: var(--font-ui);
   /* Mesh gradient lebih pekat dari v1 — semakin kaya warna di belakang
      kaca, semakin terasa efek liquid glass-nya. */
   background-color: var(--canvas);
@@ -168,6 +169,22 @@ body {
 }
 
 @layer utilities {
+  /* ── Utilitas tipografi data (aturan emas UI keuangan) ────────────
+     .font-data / .font-mono-data: Inter + font-variant-numeric
+     tabular-nums → semua digit punya lebar sama, sehingga nominal di
+     tabel/daftar sejajar vertikal dan tidak "bergojolak" saat berubah. */
+  .font-data,
+  .font-mono-data {
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+
+  /* Tabel transaksi: header tetap Manrope (inherit), sel angka = Inter. */
+  table .font-data {
+    letter-spacing: -0.01em;
+  }
+
   .text-balance {
     text-wrap: balance;
   }

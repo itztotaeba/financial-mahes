@@ -97,13 +97,13 @@ export default function LaporanPage() {
                   <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#00000010" />
                   <XAxis
                     dataKey="label"
-                    tick={{ fontSize: 12, fill: "#151516", opacity: 0.6 }}
+                    tick={{ fontSize: 12, fill: "#151516", opacity: 0.6, fontFamily: "var(--font-data)" }}
                     axisLine={false}
                     tickLine={false}
                   />
                   <YAxis
                     tickFormatter={(v: number) => formatIDRCompact(v)}
-                    tick={{ fontSize: 11, fill: "#151516", opacity: 0.5 }}
+                    tick={{ fontSize: 11, fill: "#151516", opacity: 0.5, fontFamily: "var(--font-data)" }}
                     axisLine={false}
                     tickLine={false}
                     width={64}
@@ -154,13 +154,13 @@ export default function LaporanPage() {
                             {info.label}
                           </span>
                         </td>
-                        <td className="py-3 pr-3 text-right tabular-nums text-muted-ink">
+                        <td className="font-data py-3 pr-3 text-right tabular-nums text-muted-ink">
                           {row.count}
                         </td>
-                        <td className="py-3 pr-3 text-right font-semibold tabular-nums text-income">
+                        <td className="font-data py-3 pr-3 text-right font-semibold tabular-nums text-income">
                           {row.income > 0 ? formatIDR(row.income) : "—"}
                         </td>
-                        <td className="py-3 text-right font-semibold tabular-nums text-expense">
+                        <td className="font-data py-3 text-right font-semibold tabular-nums text-expense">
                           {row.expense > 0 ? formatIDR(row.expense) : "—"}
                         </td>
                       </tr>

@@ -3,7 +3,8 @@ import "./globals.css";
 import { AppShell } from "@/components/layout/AppShell";
 
 /*
-  Tipografi global: Plus Jakarta Sans.
+  Tipografi global: Manrope (UI/heading) + Inter (angka/tabel/data).
+  Didefinisikan lewat @font-face self-host di globals.css (bukan di sini).
 
   CATATAN PENTING (kenapa tidak pakai next/font/google):
   Build Vercel gagal dengan `TypeError: Cannot read properties of null
