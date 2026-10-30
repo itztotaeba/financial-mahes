@@ -59,6 +59,7 @@ interface FinanceState {
   email: string | null;
   syncing: boolean;
   pushPending: boolean; // true jika ada perubahan lokal saat cloud sync gagal
+  lastSyncedAt: number; // epoch ms sinkronisasi cloud terakhir (deteksi perubahan antar-device)
 
   /** Muat data awal dari localStorage (panggil sekali di root layout). */
   hydrate: () => Promise<void>;
@@ -79,6 +80,13 @@ interface FinanceState {
   pullFromCloud: () => Promise<void>;
   /** Dorong seluruh data lokal -> upsert ke Supabase. */
   pushToCloud: () => Promise<void>;
+  /**
+   * Pull-on-load: bila user login DAN ada perubahan di cloud sejak sync
+   * terakhir (atau tab lain/device lain mengirim pesan), tarik ulang data.
+   * Dipanggil saat hydrate & ketika tab kembali fokus — membuat refresh
+   * browser di device B langsung menampilkan data terbaru dari device A.
+   */
+  refreshIfStale: () => Promise<void>;
 }
 
 /**
@@ -97,6 +105,47 @@ function translateAuthError(message: string): string {
   return message;
 }
 
+/**
+ * Helper bersama: tarik SELURUH snapshot cloud -> simpan ke localStorage +
+ * update state store + perbarui watermark `lastSyncedAt`.
+ * Dipakai oleh pullFromCloud, refreshIfStale, dan Realtime onChange.
+ */
+async function applyCloudSnapshot(
+  _userId: string,
+  set: (partial: Partial<FinanceState>) => void,
+  get: () => FinanceState
+): Promise<void> {
+  const sb = await getSupabase();
+  const { data, error } = await sb
+    .from("transactions")
+    .select("*")
+    .order("date", { ascending: false });
+  if (error) throw error;
+  const cloud = (data ?? []).map((r) => fromSupabaseRow(r as Record<string, unknown>));
+  // Simpan hasil cloud + tandai "sengaja kosong" bila cloud kosong,
+  // agar hydrate berikutnya tidak memunculkan dummy lagi.
+  const now = Date.now();
+  localStorageHelpers.save(cloud);
+  localStorageHelpers.setLastSyncedAt(now);
+  if (cloud.length === 0) localStorageHelpers.markIntentionallyEmpty();
+  else localStorageHelpers.clearIntentionallyEmpty();
+  set({ transactions: cloud, pushPending: false, lastSyncedAt: now });
+  notifyOtherTabs(); // sinkronkan tab lain di perangkat yang sama
+  void get; // dipanggil untuk konsistensi API helper
+}
+
+/** Beri tahu tab lain di perangkat yang sama bahwa data cloud berubah. */
+function notifyOtherTabs(): void {
+  if (typeof window === "undefined") return;
+  try {
+    const bc = new BroadcastChannel("financial-mahes-sync");
+    bc.postMessage({ type: "cloud-changed" });
+    bc.close();
+  } catch {
+    /* unsupported -> noop */
+  }
+}
+
 export const useFinanceStore = create<FinanceState>((set, get) => ({
   transactions: [],
   hydrated: false,
@@ -105,6 +154,7 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
   email: null,
   syncing: false,
   pushPending: false,
+  lastSyncedAt: localStorageHelpers.getLastSyncedAt(),
 
   hydrate: async () => {
     if (get().hydrated) return;
@@ -114,6 +164,9 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
     set({ transactions: data, hydrated: true });
     // Cek sesi Supabase yang tersimpan (tanpa reload halaman).
     await get().checkSession();
+    // Pull-on-load: bila login dan cloud lebih baru dari cache lokal
+    // (mis. device A mengubah data), langsung tarik versi terbaru.
+    void get().refreshIfStale();
   },
 
   clearTransactions: () => {
@@ -139,6 +192,7 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
           set({ transactions: updated });
         });
         void finalId;
+        notifyOtherTabs();
       } catch {
         set({ pushPending: true }); // tetap aman di localStorage, bisa retry manual
       }
@@ -175,6 +229,7 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
             });
           }
         }
+        notifyOtherTabs();
       } catch {
         set({ pushPending: true });
       }
@@ -195,6 +250,7 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
           : sb.from("transactions").delete().eq("client_id", id);
         const { error } = await q;
         if (error) throw error;
+        notifyOtherTabs();
       } catch {
         set({ pushPending: true });
       }
@@ -228,16 +284,7 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
     // Setelah login, SELALU tarik data akun dari Supabase dan jadikan sumber
     // tampilan (sekaligus cache lokal). Tidak ada lagi prompt "upload dummy".
     try {
-      const { data: rows, error: selErr } = await sb
-        .from("transactions")
-        .select("*")
-        .order("date", { ascending: false });
-      if (selErr) throw selErr;
-      const cloud = (rows ?? []).map((r) => fromSupabaseRow(r as Record<string, unknown>));
-      localStorageHelpers.save(cloud);
-      if (cloud.length === 0) localStorageHelpers.markIntentionallyEmpty();
-      else localStorageHelpers.clearIntentionallyEmpty();
-      set({ transactions: cloud, pushPending: false });
+      await applyCloudSnapshot(data.user?.id ?? "", set, get);
     } catch {
       /* gagal tarik cloud -> tetap tampilkan data lokal, sync manual via Pengaturan */
     }
@@ -283,21 +330,52 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
     if (!userId) return;
     set({ syncing: true });
     try {
-      const sb = await getSupabase();
-      const { data, error } = await sb
-        .from("transactions")
-        .select("*")
-        .order("date", { ascending: false });
-      if (error) throw error;
-      const cloud = (data ?? []).map((r) => fromSupabaseRow(r as Record<string, unknown>));
-      // Simpan hasil cloud + tandai "sengaja kosong" bila cloud kosong,
-      // agar hydrate berikutnya tidak memunculkan dummy lagi.
-      localStorageHelpers.save(cloud);
-      if (cloud.length === 0) localStorageHelpers.markIntentionallyEmpty();
-      else localStorageHelpers.clearIntentionallyEmpty();
-      set({ transactions: cloud, pushPending: false });
+      await applyCloudSnapshot(userId, set, get);
     } finally {
       set({ syncing: false });
+    }
+  },
+
+  /**
+   * Pull-on-load — strategi "watermark" agar hemat & andal:
+   * 1. Head-count `count()` ringan + timestamp perubahan terbaru di cloud.
+   * 2. Bila jumlah baris ATAU waktu berubah sejak sync terakhir -> full pull.
+   * 3. Bila tidak berubah -> tidak melakukan apa-apa (cache lokal valid).
+   * Ini membuat refresh browser di device B langsung menampilkan data
+   * terbaru dari device A TANPA perlu tombol "Load data dari cloud".
+   */
+  refreshIfStale: async () => {
+    const { userId, hydrated } = get();
+    if (!userId || !hydrated || !isSupabaseConfigured()) return;
+    try {
+      const sb = await getSupabase();
+      // Kolom updated_at sudah ada di skema (001_init.sql) dan di-set oleh DB.
+      const { count, error: cntErr } = await sb
+        .from("transactions")
+        .select("id", { count: "exact", head: true });
+      if (cntErr) return; // offline / env belum siap -> biarkan cache lokal
+      const { data: latest, error: latErr } = await sb
+        .from("transactions")
+        .select("updated_at")
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (latErr) return;
+
+      const lastChangedMs = latest?.updated_at ? Date.parse(String(latest.updated_at)) : 0;
+      const localCount = get().transactions.length;
+      const staleByCount = count !== null && count !== localCount;
+      const staleByTime = lastChangedMs > get().lastSyncedAt + 1500; // toleransi drift jam
+
+      if (staleByCount || staleByTime) {
+        await applyCloudSnapshot(userId, set, get);
+      } else {
+        // Sinkron dengan cloud — perbarui watermark lokal.
+        localStorageHelpers.setLastSyncedAt(Date.now());
+        set({ lastSyncedAt: Date.now() });
+      }
+    } catch {
+      /* gagal cek -> aman, tetap pakai cache lokal */
     }
   },
 
@@ -336,14 +414,7 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
 
       // 3) Setelah upload sukses, tarik balik salinan cloud (berisi UUID resmi)
       //    agar id lokal & cloud identik — CRUD berikutnya ikut tersinkron.
-      const { data: synced, error: pullErr } = await sb
-        .from("transactions")
-        .select("*")
-        .order("date", { ascending: false });
-      if (pullErr) throw pullErr;
-      const cloud = (synced ?? []).map((r) => fromSupabaseRow(r as Record<string, unknown>));
-      localStorageHelpers.save(cloud);
-      set({ transactions: cloud, pushPending: false });
+      await applyCloudSnapshot(userId, set, get);
     } catch (err) {
       set({ pushPending: true });
       throw err; // lempar agar UI bisa menampilkan pesan error
