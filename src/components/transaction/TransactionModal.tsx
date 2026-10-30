@@ -10,7 +10,14 @@ import type { Transaction, TransactionType } from "@/types";
 import { CATEGORY_MAP, EXPENSE_CATEGORIES, INCOME_CATEGORIES } from "@/types";
 import { useFinanceStore } from "@/store/useFinanceStore";
 import { Button, Input, Label } from "@/components/ui/primitives";
-import { cn, todayISO } from "@/lib/utils";
+import { cn, nowLocalInput } from "@/lib/utils";
+
+/** Normalisasi nilai tanggal lama ("YYYY-MM-DD") utk input datetime-local. */
+function toDatetimeLocal(value: string): string {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return `${value}T00:00`;
+  if (/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/.test(value)) return value.slice(0, 16).replace(" ", "T");
+  return nowLocalInput(); // nilai tak dikenal -> pakai sekarang (hindari "Invalid date")
+}
 
 interface Props {
   open: boolean;
@@ -26,7 +33,7 @@ export function TransactionModal({ open, editing, onClose }: Props) {
   const [type, setType] = useState<TransactionType>("expense");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("makan");
-  const [date, setDate] = useState(todayISO());
+  const [date, setDate] = useState(nowLocalInput());
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -39,13 +46,13 @@ export function TransactionModal({ open, editing, onClose }: Props) {
       setType(editing.type);
       setAmount(String(editing.amount));
       setCategory(editing.category);
-      setDate(editing.date);
+      setDate(toDatetimeLocal(editing.date));
       setNote(editing.note);
     } else {
       setType("expense");
       setAmount("");
       setCategory("makan");
-      setDate(todayISO());
+      setDate(nowLocalInput());
       setNote("");
     }
   }, [open, editing]);
@@ -68,8 +75,13 @@ export function TransactionModal({ open, editing, onClose }: Props) {
       setError("Nominal harus lebih dari 0.");
       return;
     }
+    // Validasi datetime — cegah nilai kosong/tak valid tersimpan ("Invalid date").
+    let finalDate = date ? date.slice(0, 16).replace(" ", "T") : "";
+    if (!finalDate || Number.isNaN(new Date(finalDate).getTime())) {
+      finalDate = nowLocalInput();
+    }
     setSaving(true);
-    const payload = { type, amount: value, category, date, note: note.trim() };
+    const payload = { type, amount: value, category, date: finalDate, note: note.trim() };
     if (editing) await updateTransaction(editing.id, payload);
     else await addTransaction(payload);
     setSaving(false);
@@ -165,13 +177,13 @@ export function TransactionModal({ open, editing, onClose }: Props) {
             </div>
           </div>
 
-          {/* Tanggal + Catatan */}
+          {/* Tanggal + Waktu + Catatan */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <Label>Tanggal</Label>
-              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
+            <div className="sm:col-span-2">
+              <Label>Tanggal &amp; Waktu</Label>
+              <Input type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} required />
             </div>
-            <div>
+            <div className="sm:col-span-2">
               <Label>Catatan</Label>
               <Input
                 placeholder="cth: Makan siang"

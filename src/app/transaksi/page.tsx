@@ -33,8 +33,9 @@ export default function TransaksiPage() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return [...transactions]
-      .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
+    // Urutan: waktu input terakhir -> terlama (sortedByInput dari store).
+    return useFinanceStore.getState()
+      .sortedByInput(transactions)
       .filter((t) => {
         if (typeFilter !== "all" && t.type !== typeFilter) return false;
         if (categoryFilter !== "all" && t.category !== categoryFilter) return false;

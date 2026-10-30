@@ -10,14 +10,15 @@ import type { Transaction } from "@/types";
 import { localStorageHelpers } from "@/lib/storage";
 import { toSupabasePayload, fromSupabaseRow, isUuid, isSupabaseConfigured } from "@/lib/supabase";
 import { generateId } from "@/lib/utils";
+import { getSupabaseClient } from "@/lib/supabaseClient";
 
-/** Ambil Supabase client secara lazy agar bundle tetap aman tanpa env. */
-async function getSupabase() {
-  const { createClient } = await import("@supabase/supabase-js");
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) throw new Error("Supabase env tidak tersedia");
-  return createClient(url, key);
+/**
+ * Ambil Supabase client — SELALU instance singleton yang sama.
+ * (Dulu tiap pemanggilan membuat createClient baru -> warning
+ * "Multiple GoTrueClient instances detected" di console.)
+ */
+function getSupabase() {
+  return Promise.resolve(getSupabaseClient());
 }
 
 /**
@@ -66,8 +67,11 @@ interface FinanceState {
   /** Kosongkan data tanpa memunculkan dummy lagi (untuk pull cloud yang kosong). */
   clearTransactions: () => void;
 
+  /** Urutan stabil terbaru -> terlama berdasarkan waktu input (created_at). */
+  sortedByInput: (list?: Transaction[]) => Transaction[];
+
   // ---- CRUD ----
-  addTransaction: (t: Omit<Transaction, "id" | "created_at">) => Promise<void>;
+  addTransaction: (t: Omit<Transaction, "id" | "created_at" | "inputted_at">) => Promise<void>;
   updateTransaction: (id: string, patch: Partial<Omit<Transaction, "id">>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
 
@@ -103,6 +107,24 @@ function translateAuthError(message: string): string {
   if (m.includes("rate limit"))
     return "Terlalu banyak percobaan. Tunggu sebentar lalu coba lagi.";
   return message;
+}
+
+/**
+ * Kunci sorting untuk `sortedByInput`: epoch ms dari waktu input.
+ * Prioritas: inputted_at (eksplisit dari form) -> created_at (auto/cloud)
+ * -> tanggal transaksi (00:00 lokal). 0 bila tidak ada yang valid.
+ */
+function sortKeyOf(t: Transaction): number {
+  const raw = t.inputted_at ?? t.created_at;
+  if (raw) {
+    const ms = Date.parse(raw);
+    if (!Number.isNaN(ms)) return ms;
+  }
+  if (t.date) {
+    const ms = Date.parse(`${t.date}T00:00:00`); // tanpa Z -> zona lokal, aman DST
+    if (!Number.isNaN(ms)) return ms;
+  }
+  return 0;
 }
 
 /**
@@ -174,8 +196,18 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
     set({ transactions: [] });
   },
 
+  /**
+   * Urutan daftar transaksi: terbaru -> terlama berdasarkan WAKTU INPUT.
+   * Prioritas timestamp: `inputted_at` (waktu input eksplisit dari form) ->
+   * `created_at` (otomatis saat tambah / kolom cloud) -> fallback `date`.
+   */
+  sortedByInput: (list) => {
+    const arr = list ?? get().transactions;
+    return [...arr].sort((a, b) => sortKeyOf(b) - sortKeyOf(a));
+  },
+
   addTransaction: async (input) => {
-    const tx: Transaction = { ...input, id: generateId(), created_at: new Date().toISOString() };
+    const tx: Transaction = { ...input, id: generateId(), created_at: new Date().toISOString(), inputted_at: new Date().toISOString() };
     const next = [tx, ...get().transactions];
     localStorageHelpers.save(next);
     set({ transactions: next });
