@@ -39,20 +39,30 @@
 }
 
 /*
-  Financial Mahes — Liquid Glass Design System v2 (iOS 26 / "Liquid Glass")
+  Financial Mahes — "Fresh Earthy Minimalism" Design System v3
   ------------------------------------------------------------
-  Prinsip: permukaan kaca yang benar-benar BENING (blur besar + saturasi
-  tinggi supaya warna latar "menembus" kaca), specular highlight di tepi
-  atas, shadow berlapis untuk kedalaman. Keterbacaan tetap prioritas #1:
-  teks penting solid #151516, teks sekunder minimal rgba(21,21,22,.68).
+  Terinspirasi dashboard keuangan beralam earthy (olive/sage/terracotta):
+  off-white lembut, kartu putih dengan radius besar (rounded-2xl/3xl),
+  border sangat halus (#E5E5E0), dan shadow nyaris tak terlihat
+  (0 8px 30px rgb(0,0,0,.04)). Nama class lama (.glass-card, .glass-pill,
+  dst.) DIPERTAHANKAN — hanya nilainya yang diubah ke nuansa earthy,
+  sehingga seluruh komponen yang sudah ada otomatis ikut ter-upgrade
+  tanpa menyentuh logic keuangan sama sekali.
 */
 
 :root {
-  --ink: #151516;
-  --canvas: #f6f6f6;
-  --income: #4fb279;
-  --expense: #d3534c;
-  --primary: #2141e0;
+  /* Palet Fresh Earthy */
+  --ink: #162701; /* teks utama — hijau-hitau sangat gelap, bukan hitam pekat */
+  --canvas: #f7f7f5; /* background off-white lembut */
+  --card: #ffffff; /* permukaan kartu */
+  --card-alt: #fafaf9; /* permukaan kartu sekunder */
+  --line: #e5e5e0; /* border sangat halus */
+  --income: #647637; /* primary / success (pemasukan) — olive */
+  --muted-green: #74864b; /* secondary / muted */
+  --accent: #c6b54f; /* aksen 1 (warning / kategori) — kuning earthy */
+  --expense: #bb622e; /* aksen 2 (danger / pengeluaran) — terracotta */
+  --soft: #b4b2a0; /* teks sekunder / sumbu chart */
+  --primary: #647637; /* override primary → olive (bukan biru lagi) */
   --lilac: #c8acc0;
 
   /* Token tipografi — dipakai Tailwind (font-ui / font-data) & CSS global.
@@ -70,58 +80,47 @@ body {
   color: var(--ink);
   /* Font global = Manrope (UI umum). Angka/data ditumpangi .font-data → Inter. */
   font-family: var(--font-ui);
-  /* Mesh gradient lebih pekat dari v1 — semakin kaya warna di belakang
-     kaca, semakin terasa efek liquid glass-nya. */
+  /* Off-white lembut + sapuan warna earthy yang SANGAT tipis agar tetap
+     bersih — nuansa olive/sage/terracotta, bukan biru fintech. */
   background-color: var(--canvas);
   background-image: radial-gradient(
       55rem 38rem at 6% -12%,
-      rgba(33, 65, 224, 0.16),
+      rgba(116, 134, 75, 0.07),
       transparent 62%
     ),
-    radial-gradient(48rem 34rem at 114% 6%, rgba(200, 172, 192, 0.34), transparent 58%),
-    radial-gradient(42rem 32rem at 52% 116%, rgba(79, 178, 121, 0.16), transparent 62%),
-    radial-gradient(30rem 24rem at 88% 82%, rgba(211, 83, 76, 0.08), transparent 60%);
+    radial-gradient(48rem 34rem at 114% 6%, rgba(198, 181, 79, 0.08), transparent 58%),
+    radial-gradient(42rem 32rem at 52% 116%, rgba(100, 118, 55, 0.06), transparent 62%),
+    radial-gradient(30rem 24rem at 88% 82%, rgba(187, 98, 46, 0.05), transparent 60%);
   background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
 @layer components {
-  /* ── Kartu kaca utama ─────────────────────────────────────────────
-     bg-white/55 + blur 28px + saturate(1.8): bening & berwarna, khas
-     iOS 26. Shadow dua lapis (dekat + jauh) memberi kesan melayang. */
+  /* ── Kartu utama "earthy" ─────────────────────────────────────────
+     Putih bersih, radius besar, border halus #E5E5E0, shadow nyaris
+     tak terlihat — inti dari Fresh Earthy Minimalism. */
   .glass-card {
-    border-radius: 1.5rem;
-    border: 1px solid rgba(255, 255, 255, 0.55);
-    background: rgba(255, 255, 255, 0.55);
-    backdrop-filter: blur(28px) saturate(180%);
-    -webkit-backdrop-filter: blur(28px) saturate(180%);
-    box-shadow:
-      0 1px 0 rgba(255, 255, 255, 0.7) inset,
-      0 8px 24px rgba(21, 21, 22, 0.06),
-      0 24px 64px rgba(33, 65, 224, 0.08);
+    border-radius: 1.5rem; /* rounded-3xl-ish */
+    border: 1px solid var(--line);
+    background: var(--card);
+    box-shadow: 0 8px 30px rgb(0 0 0 / 0.04);
   }
 
-  /* Panel sekunder / nested — sedikit lebih transparan. */
+  /* Panel sekunder / nested — sedikit lebih krem (#FAFAF9). */
   .glass-subtle {
     border-radius: 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.45);
-    background: rgba(255, 255, 255, 0.38);
-    backdrop-filter: blur(20px) saturate(160%);
-    -webkit-backdrop-filter: blur(20px) saturate(160%);
-    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.55) inset, 0 6px 18px rgba(21, 21, 22, 0.05);
+    border: 1px solid var(--line);
+    background: var(--card-alt);
+    box-shadow: none;
   }
 
   /* Bar / pill mengambang (header, avatar, tombol ikon). */
   .glass-pill {
     border-radius: 9999px;
-    border: 1px solid rgba(255, 255, 255, 0.55);
-    background: rgba(255, 255, 255, 0.5);
-    backdrop-filter: blur(24px) saturate(180%);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
-    box-shadow:
-      0 1px 0 rgba(255, 255, 255, 0.7) inset,
-      0 6px 16px rgba(21, 21, 22, 0.07);
+    border: 1px solid var(--line);
+    background: var(--card);
+    box-shadow: 0 4px 16px rgb(22 39 1 / 0.05);
   }
 
   /* Chip kategori transaksi. */
@@ -130,41 +129,28 @@ body {
     align-items: center;
     gap: 0.375rem;
     border-radius: 9999px;
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    background: rgba(255, 255, 255, 0.45);
+    border: 1px solid var(--line);
+    background: var(--card-alt);
     padding: 0.25rem 0.625rem;
     font-size: 0.75rem;
     line-height: 1rem;
     font-weight: 500;
-    backdrop-filter: blur(16px) saturate(160%);
-    -webkit-backdrop-filter: blur(16px) saturate(160%);
   }
 
-  /* Skeleton loading transparan. */
+  /* Skeleton loading. */
   .glass-skeleton {
     animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     border-radius: 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    background: rgba(255, 255, 255, 0.35);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--line);
+    background: var(--card-alt);
   }
 
-  /* Kartu saldo gelap — versi "smoked glass": bening tapi pekat. */
+  /* Kartu saldo hero — "deep forest": hijau sangat gelap sebagai fokus. */
   .glass-dark {
     border-radius: 1.5rem;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    background: linear-gradient(
-      155deg,
-      rgba(30, 30, 34, 0.88) 0%,
-      rgba(21, 21, 22, 0.82) 55%,
-      rgba(33, 65, 224, 0.35) 130%
-    );
-    backdrop-filter: blur(30px) saturate(160%);
-    -webkit-backdrop-filter: blur(30px) saturate(160%);
-    box-shadow:
-      0 1px 0 rgba(255, 255, 255, 0.18) inset,
-      0 12px 32px rgba(21, 21, 22, 0.28);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: linear-gradient(155deg, #24330f 0%, #162701 55%, #3a4a1e 130%);
+    box-shadow: 0 12px 32px rgba(22, 39, 1, 0.22);
   }
 }
 
@@ -191,7 +177,7 @@ body {
 
   /* Teks sekunder yang tetap terbaca di atas permukaan kaca. */
   .text-muted-ink {
-    color: rgba(21, 21, 22, 0.68);
+    color: #74864B; /* muted green — teks sekunder earthy */
   }
 
   /* Halo teks tipis — menjaga angka/heading tetap tajam saat berada
@@ -207,6 +193,6 @@ body {
   }
   .thin-scrollbar::-webkit-scrollbar-thumb {
     border-radius: 9999px;
-    background: rgba(21, 21, 22, 0.15);
+    background: rgba(22, 39, 1, 0.14);
   }
 }

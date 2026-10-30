@@ -136,14 +136,14 @@ export default function LoginPage() {
           </div>
 
           {/* Toggle mode */}
-          <div className="mb-5 grid grid-cols-2 gap-1.5 rounded-full border border-white/60 bg-white/50 p-1.5 backdrop-blur-md">
+          <div className="mb-5 grid grid-cols-2 gap-1.5 rounded-full border border-line bg-[#F7F7F5] p-1.5">
             {(["login", "signup"] as const).map((m) => (
               <button
                 key={m}
                 type="button"
                 onClick={() => setMode(m)}
                 className={`rounded-full py-2 text-sm font-bold transition-all ${
-                  mode === m ? "bg-white text-primary shadow-glass" : "text-muted-ink hover:text-ink"
+                  mode === m ? "bg-income text-white shadow-soft" : "text-muted-ink hover:text-ink"
                 }`}
               >
                 {m === "login" ? "Masuk" : "Daftar"}

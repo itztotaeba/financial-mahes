@@ -22,7 +22,7 @@ export function TransactionItem({
   const isIncome = tx.type === "income";
 
   return (
-    <div className="group flex items-center gap-3 rounded-2xl px-2 py-2.5 transition-colors hover:bg-white/60">
+    <div className="group flex items-center gap-3 rounded-2xl px-2 py-2.5 transition-colors hover:bg-[#FAFAF9]">
       {/* Ikon kategori — tile kaca dengan warna kategori */}
       <span
         className="glass-chip !gap-0 grid h-10 w-10 shrink-0 place-items-center rounded-2xl"

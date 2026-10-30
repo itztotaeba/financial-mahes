@@ -9,11 +9,14 @@ import { formatIDR } from "@/lib/utils";
 import type { CategorySlice } from "@/lib/selectors";
 
 export function CategoryPie({ data }: { data: CategorySlice[] }) {
+  /** Palet earthy untuk slice donut (urutan prioritas). */
+  const EARTHY = ["#647637", "#C6B54F", "#BB622E", "#74864B"];
+
   const top = data.slice(0, 6); // batasi agar tetap mudah dipindai
   const othersValue = data.slice(6).reduce((a, b) => a + b.value, 0);
   const chartData =
     othersValue > 0
-      ? [...top, { name: "Lainnya", value: othersValue, color: "#C8ACC0", percent: 0 }]
+      ? [...top, { name: "Lainnya", value: othersValue, color: "#B4B2A0", percent: 0 }]
       : top;
 
   return (
@@ -37,7 +40,8 @@ export function CategoryPie({ data }: { data: CategorySlice[] }) {
                 strokeWidth={0}
               >
                 {chartData.map((slice, i) => (
-                  <Cell key={i} fill={slice.color} />
+                  /* Slice memakai palet earthy berurutan agar konsisten */
+                  <Cell key={i} fill={EARTHY[i % EARTHY.length]} />
                 ))}
               </Pie>
               <Tooltip
@@ -64,12 +68,12 @@ export function CategoryPie({ data }: { data: CategorySlice[] }) {
 
         {/* Legend */}
         <ul className="w-full space-y-2">
-          {chartData.map((slice) => (
+          {chartData.map((slice, i) => (
             <li key={slice.name} className="flex items-center justify-between gap-2 text-sm">
               <span className="flex min-w-0 items-center gap-2">
                 <span
                   className="h-2.5 w-2.5 shrink-0 rounded-full"
-                  style={{ backgroundColor: slice.color }}
+                  style={{ backgroundColor: EARTHY[i % EARTHY.length] }}
                 />
                 <span className="truncate text-ink/80">{slice.name}</span>
               </span>

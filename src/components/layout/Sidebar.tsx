@@ -31,8 +31,8 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
             className={cn(
               "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition-all active:scale-[0.98]",
               active
-                ? "bg-primary text-white shadow-glass"
-                : "border border-transparent text-ink/70 hover:border-white/60 hover:bg-white/55 hover:text-ink hover:shadow-glass backdrop-blur-xl"
+                ? "bg-income text-white shadow-soft"
+                : "border border-transparent text-ink/70 hover:border-line hover:bg-[#FAFAF9] hover:text-ink"
             )}
           >
             <Icon size={18} strokeWidth={2.2} />
@@ -47,8 +47,8 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
 /** Brand — tagline dibuat lebih "bernyawa", bukan label generik. */
 function Brand() {
   return (
-    <div className="mb-6 flex items-center gap-3 px-2 pb-6" style={{ borderBottom: "1px solid rgba(255,255,255,.6)", boxShadow: "0 1px 0 rgba(21,21,22,.04)" }}>
-      <div className="grid h-10 w-10 place-items-center rounded-2xl bg-gradient-to-br from-primary to-[#4f6bff] text-white shadow-glass-lg ring-1 ring-white/40">
+    <div className="mb-6 flex items-center gap-3 px-2 pb-6 border-b border-line">
+      <div className="grid h-10 w-10 place-items-center rounded-2xl bg-gradient-to-br from-income to-muted text-white shadow-soft">
         <Wallet size={20} strokeWidth={2.4} />
       </div>
       <div>
@@ -79,10 +79,10 @@ export function MobileSidebar({ open, onClose }: { open: boolean; onClose: () =>
     <div className="fixed inset-0 z-50 lg:hidden">
       {/* overlay — blur tipis khas iOS saat drawer terbuka */}
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} aria-hidden />
-      <div className="absolute inset-y-0 left-0 w-72 max-w-[85%] overflow-y-auto border-r border-white/50 bg-white/60 p-4 shadow-glass-lg backdrop-blur-3xl saturate-150">
+      <div className="absolute inset-y-0 left-0 w-72 max-w-[85%] overflow-y-auto border-r border-line bg-white p-4 shadow-glass-lg">
         <button
           onClick={onClose}
-          className="mb-4 ml-auto grid h-9 w-9 place-items-center rounded-full bg-black/5 text-ink backdrop-blur-md"
+          className="mb-4 ml-auto grid h-9 w-9 place-items-center rounded-full bg-black/5 text-ink"
           aria-label="Tutup menu"
         >
           <X size={18} />
