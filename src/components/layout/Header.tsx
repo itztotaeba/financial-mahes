@@ -35,7 +35,7 @@ export function Header({
           <Menu size={18} />
         </button>
         <div className="min-w-0">
-          <h1 className="truncate text-xl font-extrabold tracking-tight text-ink text-glass-shadow sm:text-2xl">{title}</h1>
+          <h1 className="truncate text-xl font-extrabold tracking-tight text-ink sm:text-2xl">{title}</h1>
           {subtitle && <p className="truncate text-sm text-muted-ink">{subtitle}</p>}
         </div>
       </div>
@@ -44,7 +44,7 @@ export function Header({
         {email ? (
           <>
             <div className="glass-pill hidden items-center gap-2 py-1 pl-1 pr-3 sm:flex">
-              <span className="grid h-8 w-8 place-items-center rounded-full bg-lilac text-sm font-bold text-white">
+              <span className="grid h-8 w-8 place-items-center rounded-full bg-accent text-sm font-bold text-ink">
                 {email[0].toUpperCase()}
               </span>
               <span className="max-w-[160px] truncate text-xs font-semibold text-ink">
@@ -75,7 +75,7 @@ export function Header({
         )}
         {/* Avatar kecil pada mobile saat sudah login */}
         {email && (
-          <span className="grid h-9 w-9 place-items-center rounded-full bg-lilac text-sm font-bold text-white shadow-glass sm:hidden">
+          <span className="grid h-9 w-9 place-items-center rounded-full bg-accent text-sm font-bold text-ink shadow-soft sm:hidden">
             <UserRound size={16} />
           </span>
         )}

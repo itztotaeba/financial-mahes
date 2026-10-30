@@ -118,8 +118,8 @@ export default function LaporanPage() {
                     formatter={(value) => formatIDR(Number(value))}
                   />
                   <Legend iconType="circle" iconSize={8} />
-                  <Bar dataKey="Pemasukan" fill="#4FB279" radius={[6, 6, 0, 0]} maxBarSize={28} />
-                  <Bar dataKey="Pengeluaran" fill="#D3534C" radius={[6, 6, 0, 0]} maxBarSize={28} />
+                  <Bar dataKey="Pemasukan" fill="#647637" radius={[6, 6, 0, 0]} maxBarSize={28} />
+                  <Bar dataKey="Pengeluaran" fill="#BB622E" radius={[6, 6, 0, 0]} maxBarSize={28} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

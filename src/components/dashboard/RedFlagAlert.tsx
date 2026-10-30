@@ -14,9 +14,9 @@ export function RedFlagAlert({ summary }: { summary: Summary }) {
 
   if (summary.isRedFlag) {
     return (
-      <Card className="border-expense/30 bg-expense/[0.07]">
+      <Card className="border-expense/25 bg-[#FBF4EE]">
         <div className="flex items-start gap-3">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-expense text-white shadow-glass">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-expense text-white shadow-soft">
             <AlertTriangle size={18} />
           </span>
           <div className="min-w-0">
@@ -39,9 +39,9 @@ export function RedFlagAlert({ summary }: { summary: Summary }) {
   }
 
   return (
-    <Card className="border-income/30 bg-income/[0.07]">
+    <Card className="border-income/25 bg-[#F4F6EC]">
       <div className="flex items-center gap-3">
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-income text-white shadow-glass">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-income text-white shadow-soft">
           <ShieldCheck size={18} />
         </span>
         <div className="min-w-0 flex-1">
@@ -54,7 +54,7 @@ export function RedFlagAlert({ summary }: { summary: Summary }) {
           {/* Progress bar rasio pengeluaran:pemasukan */}
           <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-black/10">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-income to-primary transition-all"
+              className="h-full rounded-full bg-gradient-to-r from-income to-accent transition-all"
               style={{ width: `${Math.max(ratio * 100, 4)}%` }}
             />
           </div>
