@@ -7,7 +7,7 @@ import { useMemo } from "react";
 import { useFinanceStore } from "@/store/useFinanceStore";
 import type { Transaction } from "@/types";
 import { CATEGORY_MAP } from "@/types";
-import { todayISO, addDaysISO } from "@/lib/utils";
+import { todayISO, addDaysISO, dateOnly } from "@/lib/utils";
 
 export interface Summary {
   balance: number;
@@ -36,7 +36,7 @@ export interface CategorySlice {
 }
 
 function monthPrefix(iso: string) {
-  return iso.slice(0, 7); // YYYY-MM
+  return dateOnly(iso).slice(0, 7); // YYYY-MM (toleran "YYYY-MM-DDTHH:mm")
 }
 
 export function useDashboardData() {
@@ -84,7 +84,7 @@ export function useDashboardData() {
       };
     }
     for (const t of transactions) {
-      const point = byDay[t.date];
+      const point = byDay[dateOnly(t.date)];
       if (!point) continue;
       if (t.type === "income") point.income += t.amount;
       else point.expense += t.amount;
@@ -108,8 +108,12 @@ export function useDashboardData() {
       .sort((a, b) => b.value - a.value);
 
     // ---- Transaksi terbaru ----
+    // Urutkan berdasarkan WAKTU INPUT terbaru (inputted_at -> created_at -> date).
+    const inputKey = (t: Transaction) =>
+      Date.parse(t.inputted_at ?? t.created_at ?? "") ||
+      (dateOnly(t.date) ? new Date(`${dateOnly(t.date)}T${(t.date.match(/T(\d{2}:\d{2})/) ?? ["", "00:00"])[1]}:00`).getTime() : 0);
     const recent: Transaction[] = [...transactions]
-      .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
+      .sort((a, b) => inputKey(b) - inputKey(a))
       .slice(0, 7);
 
     return { summary, cashflow, categories, recent, transactions };

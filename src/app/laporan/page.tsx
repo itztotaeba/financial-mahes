@@ -21,7 +21,7 @@ import { Card } from "@/components/ui/primitives";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useFinanceStore } from "@/store/useFinanceStore";
 import { CATEGORY_MAP } from "@/types";
-import { formatIDR, formatIDRCompact } from "@/lib/utils";
+import { formatIDR, formatIDRCompact , dateOnly} from "@/lib/utils";
 
 export default function LaporanPage() {
   const hydrated = useFinanceStore((s) => s.hydrated);
@@ -31,7 +31,7 @@ export default function LaporanPage() {
   const monthly = useMemo(() => {
     const map: Record<string, { income: number; expense: number }> = {};
     for (const t of transactions) {
-      const key = t.date.slice(0, 7); // YYYY-MM
+      const key = dateOnly(t.date).slice(0, 7); // YYYY-MM (toleran format datetime)
       map[key] ??= { income: 0, expense: 0 };
       if (t.type === "income") map[key].income += t.amount;
       else map[key].expense += t.amount;

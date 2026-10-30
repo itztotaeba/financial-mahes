@@ -7,7 +7,7 @@
 import { Pencil, Trash2 } from "lucide-react";
 import type { Transaction } from "@/types";
 import { CATEGORY_MAP } from "@/types";
-import { cn, formatIDR, formatDate } from "@/lib/utils";
+import { cn, formatIDR, formatDateTime } from "@/lib/utils";
 
 export function TransactionItem({
   tx,
@@ -35,7 +35,7 @@ export function TransactionItem({
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold text-ink">{tx.note || cat.label}</p>
         <p className="mt-0.5 truncate text-xs text-muted-ink">
-          {cat.label} · {formatDate(tx.date)}
+          {cat.label} · <span className="font-data tabular-nums">{formatDateTime(tx.date)}</span>
         </p>
       </div>
 
