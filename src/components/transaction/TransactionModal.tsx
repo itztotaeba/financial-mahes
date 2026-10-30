@@ -77,14 +77,15 @@ export function TransactionModal({ open, editing, onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
-      {/* overlay */}
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} aria-hidden />
+    <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-6">
+      {/* overlay — gelap + blur khas iOS sheet */}
+      <div className="absolute inset-0 bg-black/35 backdrop-blur-md" onClick={onClose} aria-hidden />
 
-      <div className="relative w-full max-w-md rounded-t-3xl bg-white p-6 shadow-2xl sm:rounded-3xl">
+      {/* Sheet liquid glass: bening di mobile (sheet), mengambang di desktop */}
+      <div className="glass-card relative max-h-[92vh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-white/78 p-6 shadow-glass-lg saturate-150 thin-scrollbar sm:rounded-3xl">
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full bg-black/5 text-ink hover:bg-black/10"
+          className="glass-pill absolute right-4 top-4 grid h-9 w-9 place-items-center !shadow-none text-ink hover:bg-white/80"
           aria-label="Tutup"
         >
           <X size={16} />

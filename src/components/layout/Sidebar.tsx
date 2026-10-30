@@ -44,15 +44,16 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
+/** Brand — tagline dibuat lebih "bernyawa", bukan label generik. */
 function Brand() {
   return (
     <div className="mb-8 flex items-center gap-3 px-2">
-      <div className="grid h-10 w-10 place-items-center rounded-2xl bg-primary text-white shadow-glass">
-        <Wallet size={20} />
+      <div className="grid h-10 w-10 place-items-center rounded-2xl bg-gradient-to-br from-primary to-[#4f6bff] text-white shadow-glass-lg ring-1 ring-white/40">
+        <Wallet size={20} strokeWidth={2.4} />
       </div>
       <div>
-        <p className="text-base font-extrabold leading-tight text-ink">Financial Mahes</p>
-        <p className="text-xs text-muted-ink">Tracker keuangan pribadi</p>
+        <p className="text-base font-extrabold leading-tight tracking-tight text-ink">Financial Mahes</p>
+        <p className="text-xs font-medium text-muted-ink">Uangmu, ada di genggaman.</p>
       </div>
     </div>
   );
@@ -61,7 +62,8 @@ function Brand() {
 export function DesktopSidebar() {
   return (
     <aside className="hidden w-64 shrink-0 lg:block">
-      <div className="glass-card sticky top-6 px-4 pb-6">
+      {/* top-8 mengikuti padding atas baru agar sidebar ikut "turun" */}
+      <div className="glass-card sticky top-8 px-4 pb-6">
         <Brand />
         <NavList />
         <SyncStatus />
@@ -75,9 +77,9 @@ export function MobileSidebar({ open, onClose }: { open: boolean; onClose: () =>
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 lg:hidden">
-      {/* overlay */}
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} aria-hidden />
-      <div className="absolute inset-y-0 left-0 w-72 max-w-[85%] overflow-y-auto border-r border-white/60 bg-white/80 p-4 shadow-glass-lg backdrop-blur-2xl">
+      {/* overlay — blur tipis khas iOS saat drawer terbuka */}
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} aria-hidden />
+      <div className="absolute inset-y-0 left-0 w-72 max-w-[85%] overflow-y-auto border-r border-white/50 bg-white/60 p-4 shadow-glass-lg backdrop-blur-3xl saturate-150">
         <button
           onClick={onClose}
           className="mb-4 ml-auto grid h-9 w-9 place-items-center rounded-full bg-black/5 text-ink backdrop-blur-md"

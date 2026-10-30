@@ -8,9 +8,15 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      /** Tipografi global — Plus Jakarta Sans via next/font (lihat app/layout.tsx). */
+      /** Tipografi global — Plus Jakarta Sans (self-host, lihat globals.css). */
       fontFamily: {
-        sans: ["var(--font-jakarta)", "system-ui", "-apple-system", "sans-serif"],
+        sans: [
+          '"Plus Jakarta Sans"',
+          "var(--font-jakarta)",
+          "system-ui",
+          "-apple-system",
+          "sans-serif",
+        ],
       },
       /** Palet warna resmi Financial Mahes. */
       colors: {

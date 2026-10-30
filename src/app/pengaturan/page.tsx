@@ -144,8 +144,8 @@ export default function PengaturanPage() {
 
           {/* Tentang */}
           <Card className="text-xs leading-relaxed text-muted-ink">
-            <b className="text-ink">Financial Mahes</b> — tracker keuangan pribadi yang cepat,
-            rapi, dan tetap bekerja tanpa internet.
+            <b className="text-ink">Financial Mahes</b> — catat, lihat pola, dan kendalikan
+            uangmu. Cepat, rapi, dan tetap bekerja tanpa internet.
           </Card>
         </div>
       )}
