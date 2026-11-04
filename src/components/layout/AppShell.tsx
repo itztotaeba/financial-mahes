@@ -13,9 +13,10 @@
  *     - BroadcastChannel: tab lain di perangkat yang sama ikut ter-update.
  *     - Fokus tab / visibilitychange: pull-on-load saat user kembali ke tab.
  */
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { DesktopSidebar, MobileSidebar } from "./Sidebar";
+import { DesktopSidebar } from "./Sidebar";
+import { BottomTabBar } from "./BottomTabBar";
 import { GlobalTransactionModal } from "@/components/transaction/GlobalTransactionModal";
 import { useFinanceStore } from "@/store/useFinanceStore";
 
@@ -26,24 +27,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const hydrate = useFinanceStore((s) => s.hydrate);
   const userId = useFinanceStore((s) => s.userId);
-  const [mobileOpen, setMobileOpen] = useState(false);
 
   // Hydrasi store dari localStorage — hanya sekali per sesi browser.
   useEffect(() => {
     void hydrate();
   }, [hydrate]);
-
-  // Drawer mobile menutup otomatis saat berpindah halaman.
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
-
-  // Halaman dapat membuka drawer via event global "mahes:open-menu" (lihat lib/menu.ts).
-  useEffect(() => {
-    const onOpenMenu = () => setMobileOpen(true);
-    window.addEventListener("mahes:open-menu", onOpenMenu);
-    return () => window.removeEventListener("mahes:open-menu", onOpenMenu);
-  }, []);
 
   /**
    * Sinkronisasi multi-device REALTIME — TANPA membuka koneksi wss://.
@@ -146,12 +134,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen text-ink">
       {/* Padding atas lebih lega (pt-8 sm:pt-10) — judul tidak lagi mepet
-          ke tepi atas browser; ruang bawah ekstra untuk FAB mobile. */}
-      <div className="mx-auto flex max-w-[1400px] gap-6 px-4 pb-24 pt-8 sm:px-6 sm:pt-10 lg:gap-9 lg:px-10 lg:pb-8 xl:pt-12">
+          ke tepi atas browser; ruang bawah ekstra untuk BottomTabBar mobile. */}
+      <div className="mx-auto flex max-w-[1400px] gap-6 px-4 pb-24 pt-8 sm:px-6 sm:pt-10 md:pb-8 lg:gap-9 lg:px-10 xl:pt-12">
         <DesktopSidebar />
-        <MobileSidebar open={mobileOpen} onClose={() => setMobileOpen(false)} />
         <main className="min-w-0 flex-1">{children}</main>
       </div>
+      {/* Navigasi bawah khusus mobile — menggantikan hamburger + drawer. */}
+      <BottomTabBar />
       {/* Modal global tambah/edit transaksi — dipanggil via window.openTransactionModal */}
       <GlobalTransactionModal />
     </div>
