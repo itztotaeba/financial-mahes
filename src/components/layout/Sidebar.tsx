@@ -61,7 +61,10 @@ function Brand() {
 
 export function DesktopSidebar() {
   return (
-    <aside className="hidden w-64 shrink-0 lg:block">
+    // Tampil mulai breakpoint `md` (>=768px) — sebelumnya `lg`, sehingga
+    // resolusi nanggung (tablet 768–1023px) tidak punya menu sama sekali
+    // karena BottomTabBar sudah hidden di md. Sidebar mengambil alih di md.
+    <aside className="hidden w-64 shrink-0 md:block lg:w-72">
       {/* top-8 mengikuti padding atas baru agar sidebar ikut "turun" */}
       <div className="glass-card sticky top-8 px-4 pb-6">
         <Brand />
