@@ -4,7 +4,7 @@
  * Selector turunan untuk dashboard — dihitung dengan useMemo agar efisien.
  */
 import { useMemo } from "react";
-import { useFinanceStore } from "@/store/useFinanceStore";
+import { useFinanceStore, sortKeyOf } from "@/store/useFinanceStore";
 import type { Transaction } from "@/types";
 import { CATEGORY_MAP } from "@/types";
 import { todayISO, addDaysISO, dateOnly } from "@/lib/utils";
@@ -108,12 +108,10 @@ export function useDashboardData() {
       .sort((a, b) => b.value - a.value);
 
     // ---- Transaksi terbaru ----
-    // Urutkan berdasarkan WAKTU INPUT terbaru (inputted_at -> created_at -> date).
-    const inputKey = (t: Transaction) =>
-      Date.parse(t.inputted_at ?? t.created_at ?? "") ||
-      (dateOnly(t.date) ? new Date(`${dateOnly(t.date)}T${(t.date.match(/T(\d{2}:\d{2})/) ?? ["", "00:00"])[1]}:00`).getTime() : 0);
+    // Urutan mengikuti WAKTU TRANSAKSI (tanggal + jam yang diinput user),
+    // konsisten dengan sortedByInput di store.
     const recent: Transaction[] = [...transactions]
-      .sort((a, b) => inputKey(b) - inputKey(a))
+      .sort((a, b) => sortKeyOf(b) - sortKeyOf(a))
       .slice(0, 7);
 
     return { summary, cashflow, categories, recent, transactions };

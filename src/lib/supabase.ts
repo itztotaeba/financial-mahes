@@ -21,14 +21,23 @@ export const isSupabaseConfigured = () => Boolean(SUPABASE_URL && SUPABASE_ANON_
  */
 
 /** Penanda internal untuk menit jam pada note cloud. */
-const TIME_MARK = "\u27e6"; // ⟦ ... ⟧
+const TIME_MARK = "\u27e6"; // ⟦HH:mm⟧
+const INPUT_MARK = "\u27e8"; // ⟨epochMs⟩
 
 export function toSupabasePayload(t: Transaction) {
   const d = parseDateLocalish(t.date);
   let note = t.note ?? "";
   if (d && hasTimePart(t.date)) {
     const pad = (n: number) => String(n).padStart(2, "0");
-    note += `${TIME_MARK}${pad(d.getHours())}:${pad(d.getMinutes())}⟧`;
+    note += `${TIME_MARK}${pad(d.getHours())}:${pad(d.getMinutes())}\u27e9`;
+  }
+  // Titipkan waktu input (epoch ms) di note cloud supaya urutan daftar
+  // "terbaru diinput" tetap konsisten setelah tarik-ulang dari cloud —
+  // payload ini tidak memuat created_at/inputted_at, jadi tanpa penanda ini
+  // hasil pull kehilangan jejak waktu input aslinya.
+  const inputMs = Date.parse(t.inputted_at ?? t.created_at ?? "");
+  if (!Number.isNaN(inputMs)) {
+    note += `${INPUT_MARK}${inputMs}\u27e9`;
   }
   return {
     type: t.type,
@@ -65,14 +74,25 @@ export function isUuid(s: string): boolean {
 
 /** Baris Supabase -> objek Transaction aplikasi. */
 export function fromSupabaseRow(row: Record<string, unknown>): Transaction {
-  // note cloud mungkin memuat penanda jam "⟦HH:mm⟧" -> pisahkan.
+  // note cloud mungkin memuat penanda internal:
+  //   "⟦HH:mm⟧"  -> jam transaksi (kolom DB hanya menyimpan tanggal)
+  //   "⟨epoch⟩"  -> waktu input asli (untuk urutan daftar yang stabil)
   const rawNote = String(row.note ?? "");
-  const timeMatch = /⟦(\d{2}):(\d{2})⟧/.exec(rawNote);
-  const note = rawNote.replace(/ ?⟦\d{2}:\d{2}⟧/g, "").trim();
+  const timeMatch = /\u27e6(\d{2}):(\d{2})\u27e9/.exec(rawNote);
+  const inputMatch = /\u27e8(\d{10,14})\u27e9/.exec(rawNote);
+  const note = rawNote.replace(/ ?\u27e6\d{2}:\d{2}\u27e9/g, "").replace(/ ?\u27e8\d{10,14}\u27e9/g, "").trim();
 
   // Rekonstruksi datetime lokal "YYYY-MM-DDTHH:mm".
   let date = String(row.date ?? "").slice(0, 10);
   if (timeMatch) date += `T${timeMatch[1]}:${timeMatch[2]}`;
+
+  // Waktu input: prioritas penanda di note (waktu input asli saat dibuat),
+  // fallback created_at kolom DB (untuk baris yang dibuat via device lain).
+  const inputtedIso = inputMatch
+    ? new Date(Number(inputMatch[1])).toISOString()
+    : row.created_at
+      ? String(row.created_at)
+      : undefined;
 
   return {
     id: String(row.id),
@@ -81,6 +101,7 @@ export function fromSupabaseRow(row: Record<string, unknown>): Transaction {
     category: String(row.category ?? "lainnya"),
     date,
     note,
+    inputted_at: inputtedIso,
     created_at: row.created_at ? String(row.created_at) : undefined,
     updated_at: row.updated_at ? String(row.updated_at) : undefined,
   };

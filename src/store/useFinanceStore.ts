@@ -9,8 +9,28 @@ import { create } from "zustand";
 import type { Transaction } from "@/types";
 import { localStorageHelpers } from "@/lib/storage";
 import { toSupabasePayload, fromSupabaseRow, isUuid, isSupabaseConfigured } from "@/lib/supabase";
-import { generateId } from "@/lib/utils";
+import { generateId, parseDate } from "@/lib/utils";
 import { getSupabaseClient } from "@/lib/supabaseClient";
+
+/**
+ * Kunci sorting untuk daftar transaksi: epoch ms dari WAKTU TRANSAKSI
+ * (tanggal + jam yang diinput user) — BUKAN waktu input — supaya urutan
+ * daftar selalu sinkron dengan tanggal/jam transaksi. Diekspor agar
+ * store dan selector dashboard memakai logika yang sama persis.
+ * Fallback berjenjang: date valid -> created_at/inputted_at -> 0.
+ */
+export function sortKeyOf(t: Transaction): number {
+  // 1) Waktu transaksi sesuai yang diinput (zona lokal, toleran format).
+  const d = t.date ? parseDate(t.date) : null;
+  if (d && !Number.isNaN(d.getTime())) return d.getTime();
+  // 2) Fallback: timestamp sistem (baris tanpa date valid).
+  const raw = t.inputted_at ?? t.created_at;
+  if (raw) {
+    const ms = Date.parse(raw);
+    if (!Number.isNaN(ms)) return ms;
+  }
+  return 0;
+}
 
 /**
  * Ambil Supabase client — SELALU instance singleton yang sama.
@@ -110,24 +130,6 @@ function translateAuthError(message: string): string {
 }
 
 /**
- * Kunci sorting untuk `sortedByInput`: epoch ms dari waktu input.
- * Prioritas: inputted_at (eksplisit dari form) -> created_at (auto/cloud)
- * -> tanggal transaksi (00:00 lokal). 0 bila tidak ada yang valid.
- */
-function sortKeyOf(t: Transaction): number {
-  const raw = t.inputted_at ?? t.created_at;
-  if (raw) {
-    const ms = Date.parse(raw);
-    if (!Number.isNaN(ms)) return ms;
-  }
-  if (t.date) {
-    const ms = Date.parse(`${t.date}T00:00:00`); // tanpa Z -> zona lokal, aman DST
-    if (!Number.isNaN(ms)) return ms;
-  }
-  return 0;
-}
-
-/**
  * Helper bersama: tarik SELURUH snapshot cloud -> simpan ke localStorage +
  * update state store + perbarui watermark `lastSyncedAt`.
  * Dipakai oleh pullFromCloud, refreshIfStale, dan Realtime onChange.
@@ -197,9 +199,8 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
   },
 
   /**
-   * Urutan daftar transaksi: terbaru -> terlama berdasarkan WAKTU INPUT.
-   * Prioritas timestamp: `inputted_at` (waktu input eksplisit dari form) ->
-   * `created_at` (otomatis saat tambah / kolom cloud) -> fallback `date`.
+   * Urutan daftar transaksi: terbaru -> terlama berdasarkan WAKTU TRANSAKSI
+   * (tanggal + jam yang diinput user), bukan waktu input.
    */
   sortedByInput: (list) => {
     const arr = list ?? get().transactions;
