@@ -1,8 +1,8 @@
 "use client";
 
 /**
- * Halaman Pengaturan: status akun/cloud, aksi sinkronisasi manual,
- * reset data lokal & muat ulang dummy data.
+ * Halaman Pengaturan: status akun/cloud, ekspor laporan Excel (.xlsx),
+ * aksi sinkronisasi manual, reset data lokal & muat ulang data.
  */
 import { useState } from "react";
 import Link from "next/link";
@@ -10,6 +10,7 @@ import { CloudUpload, CloudDownload, Trash2, Database, WifiOff } from "lucide-re
 import { Header } from "@/components/layout/Header";
 import { openMobileMenu } from "@/lib/menu";
 import { Card, Button } from "@/components/ui/primitives";
+import { ExportExcelCard } from "@/components/export/ExportExcelCard";
 import { useFinanceStore } from "@/store/useFinanceStore";
 import { localStorageHelpers } from "@/lib/storage";
 import { isSupabaseConfigured } from "@/lib/supabase";
@@ -31,7 +32,7 @@ export default function PengaturanPage() {
 
   const flash = (msg: string) => {
     setMessage(msg);
-    setTimeout(() => setMessage(""), 3000);
+    setTimeout(() => setMessage(""), 3500);
   };
 
   /** Ganti isi localStorage dengan data baru lalu segarkan store. */
@@ -49,10 +50,9 @@ export default function PengaturanPage() {
     flash("Semua data lokal telah dihapus.");
   };
 
-
   return (
     <>
-      <Header title="Pengaturan" subtitle="Akun, sinkronisasi & data" onMenuClick={openMobileMenu} />
+      <Header title="Pengaturan" subtitle="Akun, ekspor laporan & sinkronisasi data" onMenuClick={openMobileMenu} />
 
       {!hydrated ? (
         <div className="grid min-h-[50vh] place-items-center text-sm text-muted-ink">
@@ -65,6 +65,13 @@ export default function PengaturanPage() {
               {message}
             </div>
           )}
+
+          {/* Fitur Ekspor Laporan Excel (.xlsx) */}
+          <ExportExcelCard
+            transactions={transactions}
+            userEmail={email}
+            onSuccess={(msg) => flash(msg)}
+          />
 
           {/* Status penyimpanan lokal */}
           <Card>
@@ -105,9 +112,6 @@ export default function PengaturanPage() {
                 <h2 className="text-sm font-bold text-ink">
                   {userId ? `Login sebagai ${email}` : "Belum login"}
                 </h2>
-                {/* UX: user login sudah paham mekanisme auto-sync, jadi tidak ada
-                    pengumuman "tersinkron ke cloud". Status hanya ditampilkan bila
-                    memang ada masalah (antrian sync gagal). */}
                 <p className="mt-0.5 text-xs text-muted-ink">
                   {!userId &&
                     (isSupabaseConfigured()
@@ -135,7 +139,6 @@ export default function PengaturanPage() {
                     </>
                   ) : (
                     <Link href="/login">
-                      {/* Tunggu hasil cek sesi dulu agar tombol tidak "muncul-hilang". */}
                       <Button disabled={!isSupabaseConfigured() || !userLoaded} className="px-3 text-xs">
                         <CloudUpload size={14} /> Login / Sync ke Cloud
                       </Button>
