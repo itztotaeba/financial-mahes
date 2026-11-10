@@ -42,7 +42,7 @@ export function Header({
                 {email[0].toUpperCase()}
               </span>
               <span className="max-w-[160px] truncate text-xs font-semibold text-ink">
-                {email}
+                {email.split("@")[0]}
               </span>
             </div>
             <Button variant="outline" onClick={() => logout()} className="px-3">
