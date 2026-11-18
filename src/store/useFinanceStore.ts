@@ -50,10 +50,14 @@ function getSupabase() {
  */
 async function syncTxToCloud(
   tx: Transaction,
+  userId?: string | null,
   replaceLocalId?: (oldId: string, newId: string) => void
 ): Promise<string> {
   const sb = await getSupabase();
-  const payload = toSupabasePayload(tx); // tidak memuat `id`
+  const payload = toSupabasePayload(tx) as Record<string, unknown>;
+  if (userId) {
+    payload.user_id = userId;
+  }
 
   if (isUuid(tx.id)) {
     const { error } = await sb.from("transactions").upsert({ id: tx.id, ...payload });
@@ -341,25 +345,33 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
   },
 
   addTransaction: async (input) => {
-    const tx: Transaction = { ...input, id: generateId(), created_at: new Date().toISOString(), inputted_at: new Date().toISOString() };
+    const tx: Transaction = {
+      ...input,
+      id: generateId(),
+      created_at: new Date().toISOString(),
+      inputted_at: new Date().toISOString(),
+    };
     const next = [tx, ...get().transactions];
     localStorageHelpers.save(next);
     set({ transactions: next });
 
     // Sinkron ke cloud bila sudah login.
-    if (get().userId) {
+    const { userId } = get();
+    if (userId) {
       try {
-        const finalId = await syncTxToCloud(tx, (oldId, newId) => {
+        const finalId = await syncTxToCloud(tx, userId, (oldId, newId) => {
           // Ganti id dummy lokal dengan UUID resmi dari cloud.
           const updated = useFinanceStore
             .getState()
             .transactions.map((t) => (t.id === oldId ? { ...t, id: newId } : t));
           localStorageHelpers.save(updated);
-          set({ transactions: updated });
+          set({ transactions: updated, pushPending: false });
         });
         void finalId;
+        set({ pushPending: false });
         notifyOtherTabs();
-      } catch {
+      } catch (err) {
+        console.warn("Sinkron cloud gagal, data aman di penyimpanan lokal:", err);
         set({ pushPending: true }); // tetap aman di localStorage, bisa retry manual
       }
     }
@@ -372,31 +384,36 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
     localStorageHelpers.save(next);
     set({ transactions: next });
 
-    if (get().userId) {
+    const { userId } = get();
+    if (userId) {
       try {
         const updated = next.find((t) => t.id === id);
         if (updated) {
           const sb = await getSupabase();
           if (isUuid(id)) {
+            const payload = toSupabasePayload(updated) as Record<string, unknown>;
+            payload.user_id = userId;
             const { error } = await sb
               .from("transactions")
-              .update(toSupabasePayload(updated))
+              .update(payload)
               .eq("id", id);
             if (error) throw error;
           } else {
             // Baris lama (non-UUID): hapus via client_id lalu insert ulang.
             await sb.from("transactions").delete().eq("client_id", id);
-            await syncTxToCloud(updated, (oldId, newId) => {
+            await syncTxToCloud(updated, userId, (oldId, newId) => {
               const fixed = useFinanceStore
                 .getState()
                 .transactions.map((t) => (t.id === oldId ? { ...t, id: newId } : t));
               localStorageHelpers.save(fixed);
-              set({ transactions: fixed });
+              set({ transactions: fixed, pushPending: false });
             });
           }
         }
+        set({ pushPending: false });
         notifyOtherTabs();
-      } catch {
+      } catch (err) {
+        console.warn("Update cloud gagal, data aman di penyimpanan lokal:", err);
         set({ pushPending: true });
       }
     }
@@ -511,8 +528,9 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
    * terbaru dari device A TANPA perlu tombol "Load data dari cloud".
    */
   refreshIfStale: async () => {
-    const { userId, hydrated } = get();
-    if (!userId || !hydrated || !isSupabaseConfigured()) return;
+    const { userId, hydrated, pushPending } = get();
+    // Jika ada perubahan lokal yang tertunda (pushPending), jangan tiban dengan snapshot cloud
+    if (!userId || !hydrated || !isSupabaseConfigured() || pushPending) return;
     try {
       const sb = await getSupabase();
       // Kolom updated_at sudah ada di skema (001_init.sql) dan di-set oleh DB.
