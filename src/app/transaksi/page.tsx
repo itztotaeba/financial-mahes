@@ -1,10 +1,10 @@
 "use client";
 
 /**
- * Halaman Transaksi: daftar penuh + pencarian + filter tipe/kategori.
+ * Halaman Transaksi: daftar penuh + pencarian + filter tipe/kategori/tanggal.
  */
 import { useMemo, useState } from "react";
-import { Plus, Search, PenLine } from "lucide-react";
+import { Plus, Search, PenLine, CalendarDays, X } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { openMobileMenu } from "@/lib/menu";
 import { Card, Button, Input } from "@/components/ui/primitives";
@@ -12,7 +12,7 @@ import { TransactionItem } from "@/components/transaction/TransactionItem";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useFinanceStore } from "@/store/useFinanceStore";
 import { CATEGORY_MAP } from "@/types";
-import { cn, formatIDR } from "@/lib/utils";
+import { cn, formatIDR, dateOnly } from "@/lib/utils";
 
 type TypeFilter = "all" | "income" | "expense";
 
@@ -24,6 +24,8 @@ export default function TransaksiPage() {
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  // Filter tanggal transaksi (YYYY-MM-DD), kosong = semua tanggal.
+  const [dateFilter, setDateFilter] = useState<string>("");
 
   // Daftar kategori yang benar-benar dipakai user (untuk dropdown filter).
   const usedCategories = useMemo(
@@ -39,13 +41,14 @@ export default function TransaksiPage() {
       .filter((t) => {
         if (typeFilter !== "all" && t.type !== typeFilter) return false;
         if (categoryFilter !== "all" && t.category !== categoryFilter) return false;
+        if (dateFilter && dateOnly(t.date) !== dateFilter) return false;
         if (q) {
           const cat = CATEGORY_MAP[t.category]?.label ?? "";
           if (!`${t.note} ${cat}`.toLowerCase().includes(q)) return false;
         }
         return true;
       });
-  }, [transactions, query, typeFilter, categoryFilter]);
+  }, [transactions, query, typeFilter, categoryFilter, dateFilter]);
 
   // Ringkasan hasil filter — membantu scanning cepat.
   const filteredTotals = useMemo(() => {
@@ -112,6 +115,33 @@ export default function TransaksiPage() {
                   {label}
                 </button>
               ))}
+
+              {/* Filter tanggal transaksi */}
+              <div className="relative flex items-center">
+                <CalendarDays
+                  size={14}
+                  className="pointer-events-none absolute left-3 text-muted-ink"
+                />
+                <input
+                  type="date"
+                  value={dateFilter}
+                  onChange={(e) => setDateFilter(e.target.value)}
+                  aria-label="Filter tanggal transaksi"
+                  className={cn(
+                    "glass-pill rounded-full bg-white/70 py-1.5 pl-8 pr-8 text-xs font-semibold text-ink/70 outline-none focus:border-primary/50",
+                    dateFilter && "border-primary/40 text-ink"
+                  )}
+                />
+                {dateFilter && (
+                  <button
+                    onClick={() => setDateFilter("")}
+                    aria-label="Hapus filter tanggal"
+                    className="absolute right-2 grid place-items-center rounded-full p-0.5 text-muted-ink hover:bg-black/5 hover:text-ink"
+                  >
+                    <X size={12} />
+                  </button>
+                )}
+              </div>
 
               {/* Filter kategori */}
               <select
