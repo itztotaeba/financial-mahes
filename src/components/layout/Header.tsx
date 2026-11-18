@@ -7,7 +7,7 @@
  * agar kompatibilitas pemanggil lama tidak rusak.
  */
 import Link from "next/link";
-import { CloudUpload, LogOut, UserRound } from "lucide-react";
+import { CloudUpload, LogOut, UserRound, Settings } from "lucide-react";
 import { useFinanceStore } from "@/store/useFinanceStore";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { Button } from "@/components/ui/primitives";
@@ -73,6 +73,14 @@ export function Header({
             <UserRound size={16} />
           </span>
         )}
+        {/* Tombol Pengaturan pada mobile */}
+        <Link
+          href="/pengaturan"
+          className="grid h-9 w-9 place-items-center rounded-full bg-white/70 text-ink shadow-glass border border-white/60 md:hidden active:scale-95 transition"
+          title="Pengaturan"
+        >
+          <Settings size={16} />
+        </Link>
       </div>
     </header>
   );

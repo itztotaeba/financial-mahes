@@ -9,6 +9,8 @@ import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { SummaryCards } from "@/components/dashboard/SummaryCards";
 import { RedFlagAlert } from "@/components/dashboard/RedFlagAlert";
+import { BudgetAlerts } from "@/components/budget/BudgetAlerts";
+import { BudgetSavingsWidget } from "@/components/dashboard/BudgetSavingsWidget";
 import { CashflowChart } from "@/components/charts/CashflowChart";
 import { CategoryPie } from "@/components/charts/CategoryPie";
 import { TransactionItem } from "@/components/transaction/TransactionItem";
@@ -73,6 +75,12 @@ export default function DashboardPage() {
 
           {/* Indikator red flag */}
           <RedFlagAlert summary={summary} />
+
+          {/* Peringatan Pengeluaran Melebihi Anggaran (Fitur 2) */}
+          <BudgetAlerts compact limit={3} />
+
+          {/* Widget Anggaran & Target Tabungan (Fitur 1 & 3) */}
+          <BudgetSavingsWidget />
 
           {/* Grafik + wawasan perilaku */}
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">

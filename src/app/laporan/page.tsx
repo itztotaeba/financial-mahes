@@ -19,6 +19,7 @@ import { Header } from "@/components/layout/Header";
 import { openMobileMenu } from "@/lib/menu";
 import { Card } from "@/components/ui/primitives";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { PeriodComparison } from "@/components/comparison/PeriodComparison";
 import { useFinanceStore } from "@/store/useFinanceStore";
 import { CATEGORY_MAP } from "@/types";
 import { formatIDR, formatIDRCompact , dateOnly} from "@/lib/utils";
@@ -86,6 +87,9 @@ export default function LaporanPage() {
               />
             </Card>
           )}
+
+          {/* Fitur Perbandingan Periode (MoM & YoY) */}
+          <PeriodComparison />
 
           {/* Tren bulanan */}
           <Card>

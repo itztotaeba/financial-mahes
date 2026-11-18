@@ -16,7 +16,7 @@
  */
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Receipt, Plus, BarChart3, User } from "lucide-react";
+import { LayoutDashboard, Receipt, Plus, BarChart3, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface TabItem {
@@ -32,8 +32,8 @@ const LEFT_TABS: TabItem[] = [
 ];
 
 const RIGHT_TABS: TabItem[] = [
+  { href: "/anggaran", icon: Target, label: "Anggaran" },
   { href: "/laporan", icon: BarChart3, label: "Analisis" },
-  { href: "/pengaturan", icon: User, label: "Akun" },
 ];
 
 function isActive(pathname: string | null, href: string) {

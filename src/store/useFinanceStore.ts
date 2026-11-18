@@ -6,7 +6,7 @@
  * - Jika user login (Supabase), setiap CRUD juga disinkronkan ke cloud.
  */
 import { create } from "zustand";
-import type { Transaction } from "@/types";
+import type { Transaction, CategoryBudget, SavingsGoal } from "@/types";
 import { localStorageHelpers } from "@/lib/storage";
 import { toSupabasePayload, fromSupabaseRow, isUuid, isSupabaseConfigured } from "@/lib/supabase";
 import { generateId, parseDate } from "@/lib/utils";
@@ -74,6 +74,8 @@ async function syncTxToCloud(
 
 interface FinanceState {
   transactions: Transaction[];
+  budgets: CategoryBudget[];
+  savingsGoals: SavingsGoal[];
   hydrated: boolean; // true setelah load dari localStorage (hindari flash SSR)
   userLoaded: boolean; // true setelah cek sesi Supabase pertama kali (stabil untuk UI)
   userId: string | null;
@@ -90,10 +92,21 @@ interface FinanceState {
   /** Urutan stabil terbaru -> terlama berdasarkan waktu input (created_at). */
   sortedByInput: (list?: Transaction[]) => Transaction[];
 
-  // ---- CRUD ----
+  // ---- CRUD Transaksi ----
   addTransaction: (t: Omit<Transaction, "id" | "created_at" | "inputted_at">) => Promise<void>;
   updateTransaction: (id: string, patch: Partial<Omit<Transaction, "id">>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
+
+  // ---- CRUD Anggaran per Kategori ----
+  setCategoryBudget: (category: string, amount: number, month?: string) => Promise<void>;
+  setMultipleBudgets: (list: { category: string; amount: number; month?: string }[]) => Promise<void>;
+  removeCategoryBudget: (category: string, month?: string) => Promise<void>;
+
+  // ---- CRUD Target Tabungan ----
+  addSavingsGoal: (goal: Omit<SavingsGoal, "id" | "created_at" | "updated_at">) => Promise<void>;
+  updateSavingsGoal: (id: string, patch: Partial<Omit<SavingsGoal, "id">>) => Promise<void>;
+  depositToGoal: (id: string, amount: number) => Promise<void>;
+  deleteSavingsGoal: (id: string) => Promise<void>;
 
   // ---- Auth & Sinkronisasi ----
   checkSession: () => Promise<void>;
@@ -172,6 +185,8 @@ function notifyOtherTabs(): void {
 
 export const useFinanceStore = create<FinanceState>((set, get) => ({
   transactions: [],
+  budgets: [],
+  savingsGoals: [],
   hydrated: false,
   userLoaded: false,
   userId: null,
@@ -182,14 +197,19 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
 
   hydrate: async () => {
     if (get().hydrated) return;
-    // Local-first murni: apa adanya di localStorage — TIDAK ada dummy data.
-    // User baru disambut empty-state dengan ajakan onboarding (lihat Dashboard).
+    // Local-first murni: apa adanya di localStorage.
     const data = localStorageHelpers.load();
-    set({ transactions: data, hydrated: true });
+    const budgets = localStorageHelpers.loadBudgets();
+    const goals = localStorageHelpers.loadGoals();
+    set({
+      transactions: data,
+      budgets,
+      savingsGoals: goals,
+      hydrated: true,
+    });
     // Cek sesi Supabase yang tersimpan (tanpa reload halaman).
     await get().checkSession();
     // Pull-on-load: bila login dan cloud lebih baru dari cache lokal
-    // (mis. device A mengubah data), langsung tarik versi terbaru.
     void get().refreshIfStale();
   },
 
@@ -205,6 +225,119 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
   sortedByInput: (list) => {
     const arr = list ?? get().transactions;
     return [...arr].sort((a, b) => sortKeyOf(b) - sortKeyOf(a));
+  },
+
+  // ---- CRUD Anggaran per Kategori ----
+  setCategoryBudget: async (category, amount, month) => {
+    const current = get().budgets;
+    const normMonth = month ?? "";
+    const existingIndex = current.findIndex(
+      (b) => b.category === category && (b.month ?? "") === normMonth
+    );
+    let next: CategoryBudget[];
+    if (existingIndex >= 0) {
+      next = current.map((b, idx) =>
+        idx === existingIndex ? { ...b, amount: Math.max(0, Math.round(amount)) } : b
+      );
+    } else {
+      next = [...current, { category, amount: Math.max(0, Math.round(amount)), month }];
+    }
+    localStorageHelpers.saveBudgets(next);
+    set({ budgets: next });
+    notifyOtherTabs();
+  },
+
+  setMultipleBudgets: async (list) => {
+    let current = [...get().budgets];
+    for (const item of list) {
+      const normMonth = item.month ?? "";
+      const idx = current.findIndex(
+        (b) => b.category === item.category && (b.month ?? "") === normMonth
+      );
+      if (idx >= 0) {
+        current[idx] = { ...current[idx], amount: Math.max(0, Math.round(item.amount)) };
+      } else {
+        current.push({
+          category: item.category,
+          amount: Math.max(0, Math.round(item.amount)),
+          month: item.month,
+        });
+      }
+    }
+    localStorageHelpers.saveBudgets(current);
+    set({ budgets: current });
+    notifyOtherTabs();
+  },
+
+  removeCategoryBudget: async (category, month) => {
+    const normMonth = month ?? "";
+    const next = get().budgets.filter(
+      (b) => !(b.category === category && (b.month ?? "") === normMonth)
+    );
+    localStorageHelpers.saveBudgets(next);
+    set({ budgets: next });
+    notifyOtherTabs();
+  },
+
+  // ---- CRUD Target Tabungan ----
+  addSavingsGoal: async (goalInput) => {
+    const newGoal: SavingsGoal = {
+      ...goalInput,
+      id: generateId(),
+      targetAmount: Math.max(0, Math.round(goalInput.targetAmount)),
+      currentAmount: Math.max(0, Math.round(goalInput.currentAmount || 0)),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    const next = [newGoal, ...get().savingsGoals];
+    localStorageHelpers.saveGoals(next);
+    set({ savingsGoals: next });
+    notifyOtherTabs();
+  },
+
+  updateSavingsGoal: async (id, patch) => {
+    const next = get().savingsGoals.map((g) => {
+      if (g.id !== id) return g;
+      return {
+        ...g,
+        ...patch,
+        targetAmount:
+          patch.targetAmount !== undefined
+            ? Math.max(0, Math.round(patch.targetAmount))
+            : g.targetAmount,
+        currentAmount:
+          patch.currentAmount !== undefined
+            ? Math.max(0, Math.round(patch.currentAmount))
+            : g.currentAmount,
+        updated_at: new Date().toISOString(),
+      };
+    });
+    localStorageHelpers.saveGoals(next);
+    set({ savingsGoals: next });
+    notifyOtherTabs();
+  },
+
+  depositToGoal: async (id, amount) => {
+    if (amount <= 0) return;
+    const next = get().savingsGoals.map((g) => {
+      if (g.id !== id) return g;
+      const updatedAmount = Math.max(0, g.currentAmount + Math.round(amount));
+      return {
+        ...g,
+        currentAmount: updatedAmount,
+        updated_at: new Date().toISOString(),
+      };
+    });
+    localStorageHelpers.saveGoals(next);
+    set({ savingsGoals: next });
+    notifyOtherTabs();
+  },
+
+  deleteSavingsGoal: async (id) => {
+    const next = get().savingsGoals.filter((g) => g.id !== id);
+    localStorageHelpers.saveGoals(next);
+    set({ savingsGoals: next });
+    notifyOtherTabs();
   },
 
   addTransaction: async (input) => {

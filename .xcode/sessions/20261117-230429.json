@@ -1,0 +1,19 @@
+{
+  "id": "20261117-230429",
+  "model": "qwen2.5-coder:14b",
+  "updated": 1794931469.740216,
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are xcode, a CLI coding agent running on the user's machine. You help with software engineering tasks by reading and writing files and running shell commands.\n\nIf the user asks who made you, who created you, who built you, who's behind the platform, or anything like that, answer that you were made by @c7s89r. Don't mention any other company or model provider as your creator.\n\nYou have these tools:\n  - read_file(path)                       read a file (shown with line numbers)\n  - write_file(path, content)             create/overwrite a file (needs approval)\n  - edit_file(path, old_string, new_str)  replace exact text once (needs approval)\n  - list_dir(path)                        list a directory\n  - glob_files(pattern, path)             find files, e.g. '**/*.py'\n  - grep(pattern, path, glob)             search file contents by regex\n  - run_command(command)                  run a shell command (needs approval)\n  - ask_user(question, options)           ask the user to pick from a short list\n  - update_todos(todos)                   track a multi-step plan (status: pending|in_progress|completed)\n\nASKING QUESTIONS \u2014 this matters a lot. Before building anything non-trivial, make sure you actually know what the user wants. If the request is open-ended or under-specified (\"make me a server\", \"build a bot\", \"set this up\"), do NOT just start guessing and writing code. First gather the requirements by calling ask_user, one question at a time, with 2-5 concise options each. Ask several questions in a row if needed \u2014 scope, tech/stack choices, where it runs/hosts, naming, styling, which features to include, defaults vs custom \u2014 until you have enough to build the RIGHT thing. Each option should be a real, distinct choice; add a short option so the user can say \"you pick\" when they don't care. Treat it like a quick interview: a few good questions up front beats building the wrong thing. Only skip questions when the task is unambiguous or you can reasonably decide yourself \u2014 don't interrogate the user over trivia.\n\nFor any task with multiple steps, call update_todos early to lay out the plan, then keep it current: mark a step in_progress before you start it and completed when it's done. Keep exactly one step in_progress at a time. Skip todos for trivial single-step tasks.\n\nGuidelines:\n  - Work step by step. Explore with glob_files / grep / read_file before editing.\n  - Make the smallest change that solves the task. Match existing style.\n  - Prefer edit_file for small changes; use write_file for new/rewritten files.\n  - For edit_file, old_string must match exactly once \u2014 include enough context.\n  - After making changes, when sensible, run a command to verify (tests, build, run).\n  - Be concise in your prose. Don't narrate every token; explain what matters.\n  - When the task is done, give a short summary and stop calling tools.\n  - You're on the user's real filesystem \u2014 be careful with destructive commands.\n"
+    },
+    {
+      "role": "user",
+      "content": "Buatkan fitur anggaran per kategori untuk aplikasi keuangan: pengguna set batas per kategori, sistem hitung yang sudah dipakai + sisa + persentase, beri warna status, dan tampilkan di halaman ringkasan bulanan. Jelaskan logikanya saja ya."
+    },
+    {
+      "role": "assistant",
+      "content": "{\n  \"name\": \"ask_user\",\n  \"arguments\": {\n    \"question\": \"Apakah Anda ingin membuat fitur ini untuk aplikasi keuangan berbasis web atau mobile?\",\n    \"options\": [\"Web\", \"Mobile\", \"You decide\"]\n  }\n}"
+    }
+  ]
+}

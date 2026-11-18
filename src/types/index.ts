@@ -67,3 +67,94 @@ export const EXPENSE_CATEGORIES = [
   "pendidikan",
   "lainnya",
 ];
+
+/**
+ * Batas anggaran bulanan per kategori pengeluaran.
+ */
+export interface CategoryBudget {
+  category: string;
+  amount: number; // nominal batas bulanan
+  month?: string; // "YYYY-MM" (opsional, jika tidak ada berlaku sebagai standar bulanan)
+}
+
+/**
+ * Status kalkulasi anggaran suatu kategori pada bulan tertentu.
+ */
+export interface BudgetStatus {
+  category: string;
+  categoryLabel: string;
+  budgetAmount: number;
+  spentAmount: number;
+  remainingAmount: number;
+  usagePercentage: number;
+  /**
+   * Indikator warna:
+   * - safe: <= 70% (Hijau)
+   * - warning: 71-90% (Kuning)
+   * - danger: > 90% (Merah)
+   */
+  status: "safe" | "warning" | "danger";
+  statusColor: string; // "#4FB279" | "#F59E0B" | "#D3534C"
+  statusLabel: string; // "Aman" | "Mendekati Batas" | "Peringatan" | "Melebihi Anggaran"
+  /**
+   * Level alert:
+   * - soft: 80% - 89.99%
+   * - prominent: 90% - 99.99%
+   * - over: >= 100%
+   */
+  alertLevel: "none" | "soft" | "prominent" | "over";
+}
+
+/**
+ * Data tujuan tabungan (Savings Goal).
+ */
+export interface SavingsGoal {
+  id: string; // UUID
+  name: string; // nama tujuan (mis. "Dana Darurat", "Beli Laptop")
+  targetAmount: number; // jumlah target
+  currentAmount: number; // jumlah yang sudah terkumpul
+  targetDate?: string; // tanggal target (opsional, "YYYY-MM-DD")
+  color?: string; // hex warna opsional
+  created_at?: string;
+  updated_at?: string;
+}
+
+/**
+ * Kemajuan dan estimasi tujuan tabungan.
+ */
+export interface SavingsGoalProgress {
+  goal: SavingsGoal;
+  remainingAmount: number;
+  progressPercentage: number;
+  isCompleted: boolean;
+  estimatedCompletionText: string;
+}
+
+/**
+ * Data perbandingan periode.
+ */
+export interface PeriodSummary {
+  periodKey: string; // "YYYY-MM"
+  periodLabel: string; // e.g. "November 2026"
+  shortLabel: string; // e.g. "Nov 26"
+  income: number;
+  expense: number;
+  net: number;
+}
+
+export interface PeriodComparisonData {
+  current: PeriodSummary; // Bulan ini
+  prevMonth: PeriodSummary; // Bulan lalu
+  sameMonthLastYear: PeriodSummary; // Bulan sama tahun lalu
+  // Perubahan Bulan Ini vs Bulan Lalu (MoM)
+  momIncomeDiff: number;
+  momIncomePct: number;
+  momExpenseDiff: number;
+  momExpensePct: number;
+  // Perubahan Bulan Ini vs Tahun Lalu (YoY)
+  yoyIncomeDiff: number;
+  yoyIncomePct: number;
+  yoyExpenseDiff: number;
+  yoyExpensePct: number;
+}
+

@@ -6,13 +6,14 @@
  */
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, ArrowLeftRight, BarChart3, Settings, Wallet, X } from "lucide-react";
+import { LayoutDashboard, ArrowLeftRight, BarChart3, Settings, Wallet, X, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFinanceStore } from "@/store/useFinanceStore";
 
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/transaksi", label: "Transaksi", icon: ArrowLeftRight },
+  { href: "/anggaran", label: "Anggaran & Target", icon: Target },
   { href: "/laporan", label: "Laporan", icon: BarChart3 },
   { href: "/pengaturan", label: "Pengaturan", icon: Settings },
 ];
