@@ -7,7 +7,7 @@
  */
 import { create } from "zustand";
 import type { Transaction, CategoryBudget, SavingsGoal } from "@/types";
-import { localStorageHelpers, DEFAULT_CATEGORY_BUDGETS } from "@/lib/storage";
+import { localStorageHelpers, LEGACY_DEFAULT_CATEGORY_BUDGETS } from "@/lib/storage";
 import { toSupabasePayload, fromSupabaseRow, isUuid, isSupabaseConfigured } from "@/lib/supabase";
 import { generateId, parseDate } from "@/lib/utils";
 import { getSupabaseClient, normalizeSupabaseUrl } from "@/lib/supabaseClient";
@@ -326,12 +326,13 @@ async function applyCloudSnapshot(
   // default tersimpan & ter-push saat user mengubahnya. Ini mencegah target
   // anggaran "kembali ke default" setiap logout/login ketika push cloud gagal.
   const localBudgets = get().budgets;
-  // Local dianggap "masih default" bila persis sama dengan DEFAULT_CATEGORY_BUDGETS
-  // (artinya belum pernah diubah user / belum pernah sync sukses dari cloud).
+  // Local dianggap "masih default lama" bila persis sama dengan seed versi
+  // sebelumnya (artinya belum pernah diubah user / belum pernah sync sukses
+  // dari cloud). Seed tidak dipakai lagi — mode lokal mulai tanpa data.
   const localLooksDefault =
-    localBudgets.length === DEFAULT_CATEGORY_BUDGETS.length &&
+    localBudgets.length === LEGACY_DEFAULT_CATEGORY_BUDGETS.length &&
     JSON.stringify(localBudgets.map((b) => [b.category, b.amount, b.month ?? ""])) ===
-      JSON.stringify(DEFAULT_CATEGORY_BUDGETS.map((b) => [b.category, b.amount, b.month ?? ""]));
+      JSON.stringify(LEGACY_DEFAULT_CATEGORY_BUDGETS.map((b) => [b.category, b.amount, b.month ?? ""]));
   // Bila ada perubahan lokal yang belum sempat ter-push (mis. push gagal karena
   // error 42P10), JANGAN timpa anggaran lokal dengan snapshot cloud —
   // kalau tidak, target anggaran kembali ke default setiap logout/login.
@@ -374,12 +375,14 @@ async function applyCloudSnapshot(
   void get;
 }
 
-/** Beri tahu tab lain di perangkat yang sama bahwa data cloud berubah. */
-function notifyOtherTabs(): void {
+/** Beri tahu tab lain di perangkat yang sama bahwa data cloud berubah.
+ *  `type: "logged-out"` dipakai saat logout agar tab lain ikut membersihkan
+ *  seluruh cache lokal (privasi). */
+function notifyOtherTabs(type: "cloud-changed" | "logged-out" = "cloud-changed"): void {
   if (typeof window === "undefined") return;
   try {
     const bc = new BroadcastChannel("financial-mahes-sync");
-    bc.postMessage({ type: "cloud-changed" });
+    bc.postMessage({ type });
     bc.close();
   } catch {
     /* unsupported -> noop */
@@ -400,6 +403,21 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
 
   hydrate: async () => {
     if (get().hydrated) return;
+    // Kebijakan baru: TIDAK ada data lokal saat user belum login. Bila sesi
+    // tersimpan sudah hilang (logout terjadi), bersihkan seluruh cache lokal
+    // — termasuk sisa dummy/default dari versi aplikasi sebelumnya.
+    try {
+      const sbPre = getSupabaseClient();
+      if (sbPre) {
+        const { data: preData } = await sbPre.auth.getSession();
+        if (!preData.session) localStorageHelpers.clearAll();
+      } else {
+        // Supabase belum dikonfigurasi -> mode lokal murni tetap kosong.
+        localStorageHelpers.clearAll();
+      }
+    } catch {
+      /* gagal cek sesi -> biarkan cache apa adanya */
+    }
     // Local-first murni: apa adanya di localStorage.
     const data = localStorageHelpers.load();
     const budgets = localStorageHelpers.loadBudgets();
@@ -953,10 +971,20 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
     } catch {
       /* noop */
     }
-    // Bersihkan flag sync budgets agar saat login berikutnya
-    // selalu pull data terbaru dari cloud, bukan gunakan cache lokal.
-    localStorageHelpers.setBudgetsSynced(false);
-    set({ userId: null, email: null, pushPending: false });
+    // PRIVASI: hapus SEMUA data user ini dari penyimpanan lokal begitu
+    // logout — transaksi, anggaran, target tabungan, dan seluruh flag sync.
+    // Data hanya akan masuk kembali ketika user login (pull dari cloud).
+    localStorageHelpers.clearAll();
+    notifyOtherTabs("logged-out"); // tab lain di perangkat yang sama ikut bersih
+    set({
+      transactions: [],
+      budgets: [],
+      savingsGoals: [],
+      userId: null,
+      email: null,
+      pushPending: false,
+      lastSyncedAt: 0,
+    });
   },
 
   pullFromCloud: async () => {

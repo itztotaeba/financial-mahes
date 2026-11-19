@@ -14,9 +14,13 @@ const SYNC_TS_KEY = "financial-mahes:last-synced-at";
 const BUDGETS_SYNCED_KEY = "financial-mahes:budgets-synced";
 
 /**
- * Nilai batas anggaran bulanan bawaan (default) saat pertama kali dipakai.
+ * Nilai batas anggaran bulanan bawaan — TIDAK DIPAKAI LAGI sebagai seed.
+ * Mode lokal (user belum login) kini mulai KOSONG total; data hanya masuk
+ * ketika user login dan menarik snapshot dari cloud. Konstanta ini hanya
+ * dipertahankan untuk keperluan migrasi: mengenali cache sisa versi lama
+ * agar bisa dibersihkan (lihat `localStorageHelpers.clearAll()`).
  */
-export const DEFAULT_CATEGORY_BUDGETS: CategoryBudget[] = [
+export const LEGACY_DEFAULT_CATEGORY_BUDGETS: CategoryBudget[] = [
   { category: "makan", amount: 1500000 },
   { category: "transport", amount: 600000 },
   { category: "tagihan", amount: 800000 },
@@ -25,28 +29,6 @@ export const DEFAULT_CATEGORY_BUDGETS: CategoryBudget[] = [
   { category: "kesehatan", amount: 400000 },
   { category: "pendidikan", amount: 500000 },
   { category: "lainnya", amount: 300000 },
-];
-
-/**
- * Contoh tujuan tabungan awal yang menarik & relevan.
- */
-export const DEFAULT_SAVINGS_GOALS: SavingsGoal[] = [
-  {
-    id: "goal-dana-darurat",
-    name: "Dana Darurat (3 Bulan)",
-    targetAmount: 15000000,
-    currentAmount: 6500000,
-    targetDate: "2027-06-30",
-    color: "#2141E0",
-  },
-  {
-    id: "goal-liburan",
-    name: "Liburan Akhir Tahun",
-    targetAmount: 5000000,
-    currentAmount: 3200000,
-    targetDate: "2026-12-25",
-    color: "#F59E0B",
-  },
 ];
 
 /**
@@ -85,14 +67,15 @@ export const localStorageHelpers = {
   },
 
   loadBudgets(): CategoryBudget[] {
-    if (typeof window === "undefined") return DEFAULT_CATEGORY_BUDGETS;
+    // Mode lokal murni: TIDAK ada seed/default — mulai tanpa data apapun.
+    if (typeof window === "undefined") return [];
     try {
       const raw = window.localStorage.getItem(BUDGETS_KEY);
-      if (!raw) return DEFAULT_CATEGORY_BUDGETS;
+      if (!raw) return [];
       const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? (parsed as CategoryBudget[]) : DEFAULT_CATEGORY_BUDGETS;
+      return Array.isArray(parsed) ? (parsed as CategoryBudget[]) : [];
     } catch {
-      return DEFAULT_CATEGORY_BUDGETS;
+      return [];
     }
   },
 
@@ -106,14 +89,15 @@ export const localStorageHelpers = {
   },
 
   loadGoals(): SavingsGoal[] {
-    if (typeof window === "undefined") return DEFAULT_SAVINGS_GOALS;
+    // Mode lokal murni: TIDAK ada seed/default — mulai tanpa data apapun.
+    if (typeof window === "undefined") return [];
     try {
       const raw = window.localStorage.getItem(GOALS_KEY);
-      if (!raw) return DEFAULT_SAVINGS_GOALS;
+      if (!raw) return [];
       const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? (parsed as SavingsGoal[]) : DEFAULT_SAVINGS_GOALS;
+      return Array.isArray(parsed) ? (parsed as SavingsGoal[]) : [];
     } catch {
-      return DEFAULT_SAVINGS_GOALS;
+      return [];
     }
   },
 
@@ -192,6 +176,26 @@ export const localStorageHelpers = {
       return window.localStorage.getItem(BUDGETS_SYNCED_KEY) === "1";
     } catch {
       return false;
+    }
+  },
+
+  /**
+   * Hapus SEMUA data aplikasi dari localStorage (transaksi, anggaran, target
+   * tabungan, beserta seluruh flag/penanda sync). Dipanggil saat logout agar
+   * data user sebelumnya tidak tertinggal di perangkat, dan saat hydrate
+   * untuk membersihkan cache dummy milik versi lama.
+   */
+  clearAll(): void {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.removeItem(STORAGE_KEY);
+      window.localStorage.removeItem(BUDGETS_KEY);
+      window.localStorage.removeItem(GOALS_KEY);
+      window.localStorage.removeItem(EMPTY_FLAG_KEY);
+      window.localStorage.removeItem(SYNC_TS_KEY);
+      window.localStorage.removeItem(BUDGETS_SYNCED_KEY);
+    } catch {
+      /* noop */
     }
   },
 };

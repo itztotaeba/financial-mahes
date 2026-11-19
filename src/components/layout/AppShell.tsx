@@ -19,6 +19,7 @@ import { DesktopSidebar } from "./Sidebar";
 import { BottomTabBar } from "./BottomTabBar";
 import { GlobalTransactionModal } from "@/components/transaction/GlobalTransactionModal";
 import { useFinanceStore } from "@/store/useFinanceStore";
+import { localStorageHelpers } from "@/lib/storage";
 
 /** Nama kanal broadcast antar-tab pada perangkat yang sama. */
 const BC_CHANNEL = "financial-mahes-sync";
@@ -103,6 +104,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     try {
       bc = new BroadcastChannel(BC_CHANNEL);
       bc.onmessage = (e: MessageEvent) => {
+        if (e.data?.type === "logged-out") {
+          // Tab lain di perangkat yang sama baru saja logout: bersihkan
+          // seluruh data lokal & state di tab ini juga.
+          localStorageHelpers.clearAll();
+          useFinanceStore.setState({
+            transactions: [],
+            budgets: [],
+            savingsGoals: [],
+            userId: null,
+            email: null,
+            pushPending: false,
+            lastSyncedAt: 0,
+          });
+          return;
+        }
         if (e.data?.type === "cloud-changed" && useFinanceStore.getState().userId) {
           void useFinanceStore.getState().pullFromCloud();
         }
