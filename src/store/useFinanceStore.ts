@@ -484,7 +484,9 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
               });
               if (newId && newId !== localId) {
                 const remapped = next.map((b) =>
-                  b.id === localId ? { ...b, id: newId } : b
+                  (b as CategoryBudget & { id?: string }).id === localId
+                    ? { ...b, id: newId }
+                    : b
                 );
                 localStorageHelpers.saveBudgets(remapped);
                 set({ budgets: remapped });
