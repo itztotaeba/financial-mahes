@@ -28,6 +28,9 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  // Indikator progres — tanpa ini user mengira tombol tidak berfungsi
+  // saat request auth/cloud sedang berjalan (login terasa "lama/menggantung").
+  const [submitting, setSubmitting] = useState(false);
   // Setelah auth sukses & ada data lokal → tampilkan panel pilihan sinkronisasi.
   const [showSyncChoice, setShowSyncChoice] = useState(false);
 
@@ -38,6 +41,8 @@ export default function LoginPage() {
       setError("Supabase belum dikonfigurasi. Isi .env.local terlebih dahulu.");
       return;
     }
+    if (submitting) return; // cegah submit ganda
+    setSubmitting(true);
     try {
       const result =
         mode === "login" ? await login(email, password) : await signup(email, password);
@@ -56,6 +61,8 @@ export default function LoginPage() {
       else router.push("/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal terhubung ke Supabase.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -176,8 +183,20 @@ export default function LoginPage() {
 
             {error && <p className="text-xs font-semibold text-expense">{error}</p>}
 
-            <Button type="submit" className="w-full">
-              {mode === "login" ? "Masuk & Aktifkan Sinkronisasi" : "Buat Akun & Sinkronkan"}
+            <Button type="submit" disabled={submitting} className="w-full">
+              {submitting ? (
+                <>
+                  <span
+                    className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
+                    aria-hidden
+                  />
+                  Memproses…
+                </>
+              ) : mode === "login" ? (
+                "Masuk & Aktifkan Sinkronisasi"
+              ) : (
+                "Buat Akun & Sinkronkan"
+              )}
             </Button>
 
             {!isSupabaseConfigured() && (

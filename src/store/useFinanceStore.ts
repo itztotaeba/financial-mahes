@@ -10,7 +10,7 @@ import type { Transaction, CategoryBudget, SavingsGoal } from "@/types";
 import { localStorageHelpers } from "@/lib/storage";
 import { toSupabasePayload, fromSupabaseRow, isUuid, isSupabaseConfigured } from "@/lib/supabase";
 import { generateId, parseDate } from "@/lib/utils";
-import { getSupabaseClient } from "@/lib/supabaseClient";
+import { getSupabaseClient, normalizeSupabaseUrl } from "@/lib/supabaseClient";
 
 /**
  * Kunci sorting untuk daftar transaksi: epoch ms dari WAKTU TRANSAKSI
@@ -33,12 +33,67 @@ export function sortKeyOf(t: Transaction): number {
 }
 
 /**
+ * Deteksi sesi basi/rusak di localStorage.
+ *
+ * Akar masalah GET 404 `/auth/v1/token?grant_type=refresh_token`:
+ * supabase-js menyimpan sesi pada key `sb-<project-ref>-auth-token`.
+ * Bila URL project berubah / env sempat salah / token lama sudah dicabut,
+ * refresh token tersimpan akan ditolak server (HTTP 404 "Invalid Refresh
+ * Token") — dan GoTrueClient terus-menerus mencoba me-refresh setiap kali
+ * aplikasi dibuka, memicu error CORS preflight + request berulang.
+ *
+ * Solusi: bila key sesi terdeteksi TAPI project ref di URL env tidak cocok
+ * dengan ref pada key tersebut, sesi itu pasti sisa konfigurasi lama ->
+ * bersihkan sekali saja sebelum client dibuat.
+ */
+let staleSessionChecked = false;
+function purgeStaleStoredSession(): void {
+  if (staleSessionChecked || typeof window === "undefined") return;
+  staleSessionChecked = true;
+  try {
+    const url = normalizeSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL);
+    if (!url) return; // env invalid -> biarkan apa adanya (getSupabaseClient yang menolak)
+    const ref = new URL(url).hostname.split(".")[0];
+    const prefix = "sb-";
+    const suffix = "-auth-token";
+    for (let i = window.localStorage.length - 1; i >= 0; i--) {
+      const k = window.localStorage.key(i);
+      if (!k || !k.startsWith(prefix) || !k.endsWith(suffix)) continue;
+      const storedRef = k.slice(prefix.length, k.length - suffix.length);
+      if (storedRef && storedRef !== ref) {
+        window.localStorage.removeItem(k);
+      }
+    }
+  } catch {
+    /* localStorage diblokir (private mode) -> noop */
+  }
+}
+
+/**
  * Ambil Supabase client — SELALU instance singleton yang sama.
  * (Dulu tiap pemanggilan membuat createClient baru -> warning
  * "Multiple GoTrueClient instances detected" di console.)
  */
 function getSupabase() {
+  purgeStaleStoredSession(); // sekali saja: bersihkan sesi sisa konfigurasi lama (penyebab 404 refresh_token)
   return Promise.resolve(getSupabaseClient());
+}
+
+/**
+ * Kenali error "endpoint tidak ditemukan / tabel belum ada" (HTTP 404 dari
+ * PostgREST/GoTrue). Pada deployment Vercel, URL env yang keliru membuat
+ * request di-resolve relatif ke domain sendiri -> selalu 404. Permintaan
+ * semacam ini TIDAK boleh di-retry — gagal cepat agar UI tidak menggantung.
+ */
+function isNotFoundError(err: unknown): boolean {
+  const e = err as { code?: string; status?: number; statusCode?: number; message?: string } | null;
+  if (!e) return false;
+  return (
+    e.code === "PGRST205" || // tabel/view tidak ada di schema cache
+    e.status === 404 ||
+    e.statusCode === 404 ||
+    /not found/i.test(String(e.message ?? ""))
+  );
 }
 
 /**
@@ -166,10 +221,19 @@ async function applyCloudSnapshot(
   if (txErr) throw txErr;
   const cloud = (txData ?? []).map((r) => fromSupabaseRow(r as Record<string, unknown>));
 
-  // 2) Anggaran kategori
-  const { data: budgetData } = await sb
+  // 2) Anggaran kategori — query ini yang dulu memicu GET 404 di halaman
+  //    /anggaran bila tabel `category_budgets` belum ada di schema cache
+  //    ATAU URL Supabase salah (request di-resolve ke domain Vercel).
+  //    Kesalahan di sini TIDAK boleh menggagalkan snapshot transaksi:
+  //    log warning + lewati bagian anggaran.
+  let cloudBudgetFetchFailed = false;
+  const { data: budgetData, error: budgetErr } = await sb
     .from("category_budgets")
     .select("id, category, amount, month");
+  if (budgetErr) {
+    cloudBudgetFetchFailed = true;
+    console.warn("Gagal tarik anggaran dari cloud:", budgetErr.message);
+  }
   const cloudBudgets: import("@/types").CategoryBudget[] = (budgetData ?? []).map(
     (r: Record<string, unknown>) => ({
       id: String(r.id),
@@ -205,14 +269,18 @@ async function applyCloudSnapshot(
   if (cloud.length === 0) localStorageHelpers.markIntentionallyEmpty();
   else localStorageHelpers.clearIntentionallyEmpty();
 
-  // Budgets: pakai cloud jika ada data, jika tidak jangan timpa (biarkan lokal)
+  // Budgets: pakai cloud jika ada data, jika tidak jangan timpa (biarkan lokal).
+  // Khusus kegagalan 404 (tabel belum ada / URL salah): JANGAN tandai synced,
+  // agar refreshIfStale mencoba tarik ulang setelah konfigurasi/skema diperbaiki.
   if (cloudBudgets.length > 0) {
     localStorageHelpers.saveBudgets(cloudBudgets);
   }
   // Goals: pakai cloud (termasuk array kosong = user memang hapus semua)
   // Gunakan flag khusus agar bisa dibedakan "belum pernah ada" vs "sudah dihapus semua"
   localStorageHelpers.saveGoals(cloudGoals);
-  localStorageHelpers.setBudgetsSynced(cloudBudgets.length > 0);
+  localStorageHelpers.setBudgetsSynced(
+    cloudBudgets.length > 0 || !cloudBudgetFetchFailed
+  );
 
   set({
     transactions: cloud,
@@ -306,22 +374,44 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
         const sb = await getSupabase();
         // Cek apakah baris ini sudah ada (untuk dapat `id`-nya)
         const existing = next[existingIndex >= 0 ? existingIndex : next.length - 1];
-        if (existing && (existing as CategoryBudget & { id?: string }).id) {
-          await sb
+        const localId = (existing as CategoryBudget & { id?: string } | undefined)?.id;
+        if (localId && isUuid(localId)) {
+          // Update via UUID resmi. Bila gagal (mis. baris hilang di cloud /
+          // endpoint 404), JANGAN biarkan id basi tersimpan — fallback upsert
+          // dengan id yang sama agar tetap satu baris dan sinkron kembali.
+          const { error: updErr } = await sb
             .from("category_budgets")
             .update({ amount: Math.max(0, Math.round(amount)), updated_at: new Date().toISOString() })
-            .eq("id", (existing as CategoryBudget & { id?: string }).id!);
-        } else {
-          const { data: inserted } = await sb
-            .from("category_budgets")
-            .insert({
+            .eq("id", localId);
+          if (updErr) {
+            if (isNotFoundError(updErr)) throw updErr;
+            const { error: upErr } = await sb.from("category_budgets").upsert({
+              id: localId,
               user_id: userId,
               category,
               amount: Math.max(0, Math.round(amount)),
               month: month ?? null,
-            })
+            });
+            if (upErr) throw upErr;
+          }
+        } else {
+          // Upsert berbasis unique index (user_id, category, coalesce(month,''))
+          // — migration 006 — sehingga tidak pernah menghasilkan baris ganda
+          // walau device lain membuat anggaran serupa lebih dulu.
+          const { data: inserted, error: insErr } = await sb
+            .from("category_budgets")
+            .upsert(
+              {
+                user_id: userId,
+                category,
+                amount: Math.max(0, Math.round(amount)),
+                month: month ?? null,
+              },
+              { onConflict: "user_id,category,month" }
+            )
             .select("id")
             .single();
+          if (insErr) throw insErr;
           // Simpan id cloud ke state lokal agar update/delete berikutnya bisa pakai id
           if (inserted?.id) {
             const withId = next.map((b) =>
@@ -698,8 +788,11 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
   },
 
   login: async (email, password) => {
+    // Normalisasi input: spasi terselubung di email adalah penyebab umum
+    // request auth menggantung/lambat tanpa pesan error yang jelas.
+    const cleanEmail = email.trim().toLowerCase();
     const sb = await getSupabase();
-    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    const { data, error } = await sb.auth.signInWithPassword({ email: cleanEmail, password });
     if (error) return { error: translateAuthError(error.message), hasLocalData: false };
     set({ userId: data.user?.id ?? null, email: data.user?.email ?? null, userLoaded: true });
 
@@ -719,8 +812,9 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
   },
 
   signup: async (email, password) => {
+    const cleanEmail = email.trim().toLowerCase();
     const sb = await getSupabase();
-    const { data, error } = await sb.auth.signUp({ email, password });
+    const { data, error } = await sb.auth.signUp({ email: cleanEmail, password });
     if (error) return { error: translateAuthError(error.message), hasLocalData: false };
     // Jika verifikasi email aktif, session/user bisa null -> user belum benar-benar login.
     if (!data.session || !data.user) {
@@ -785,7 +879,18 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
         const { count, error: cntErr } = await sb
           .from("transactions")
           .select("id", { count: "exact", head: true });
-        if (cntErr) return; // offline / env belum siap -> biarkan cache lokal
+        if (cntErr) {
+          // Gagal cepat bila endpoint tidak ditemukan (404) — biasanya karena
+          // NEXT_PUBLIC_SUPABASE_URL keliru di deployment sehingga request
+          // diarahkan ke domain Vercel sendiri. Jangan biarkan polling
+          // mengulang request sia-sia tiap siklus; cukup log sekali warning.
+          if (isNotFoundError(cntErr)) {
+            console.warn(
+              "Cek sinkronisasi cloud dilewati: endpoint Supabase tidak ditemukan (HTTP 404). Periksa NEXT_PUBLIC_SUPABASE_URL & jalankan migration supabase/migrations.",
+            );
+          }
+          return; // offline / env belum siap -> biarkan cache lokal
+        }
         const { data: latest, error: latErr } = await sb
           .from("transactions")
           .select("updated_at")
