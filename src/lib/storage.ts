@@ -10,6 +10,8 @@ const EMPTY_FLAG_KEY = "financial-mahes:intentionally-empty";
 /** Stempel waktu (epoch ms) sinkronisasi cloud terakhir — dipakai untuk
  *  deteksi perubahan antar-device (pull-on-load + Supabase Realtime). */
 const SYNC_TS_KEY = "financial-mahes:last-synced-at";
+/** Penanda bahwa budgets sudah pernah di-pull dari cloud (bukan nilai default). */
+const BUDGETS_SYNCED_KEY = "financial-mahes:budgets-synced";
 
 /**
  * Nilai batas anggaran bulanan bawaan (default) saat pertama kali dipakai.
@@ -169,6 +171,27 @@ export const localStorageHelpers = {
       return Number(window.localStorage.getItem(SYNC_TS_KEY)) || 0;
     } catch {
       return 0;
+    }
+  },
+
+  /** Tandai bahwa budgets sudah di-pull dari cloud (bukan nilai default lokal). */
+  setBudgetsSynced(synced: boolean): void {
+    if (typeof window === "undefined") return;
+    try {
+      if (synced) window.localStorage.setItem(BUDGETS_SYNCED_KEY, "1");
+      else window.localStorage.removeItem(BUDGETS_SYNCED_KEY);
+    } catch {
+      /* noop */
+    }
+  },
+
+  /** Apakah budgets sudah pernah di-sinkronkan dari cloud? */
+  isBudgetsSynced(): boolean {
+    if (typeof window === "undefined") return false;
+    try {
+      return window.localStorage.getItem(BUDGETS_SYNCED_KEY) === "1";
+    } catch {
+      return false;
     }
   },
 };

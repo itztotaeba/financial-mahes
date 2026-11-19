@@ -147,8 +147,8 @@ function translateAuthError(message: string): string {
 }
 
 /**
- * Helper bersama: tarik SELURUH snapshot cloud -> simpan ke localStorage +
- * update state store + perbarui watermark `lastSyncedAt`.
+ * Helper bersama: tarik SELURUH snapshot cloud (transactions + budgets + goals)
+ * -> simpan ke localStorage + update state store + perbarui watermark `lastSyncedAt`.
  * Dipakai oleh pullFromCloud, refreshIfStale, dan Realtime onChange.
  */
 async function applyCloudSnapshot(
@@ -157,22 +157,72 @@ async function applyCloudSnapshot(
   get: () => FinanceState
 ): Promise<void> {
   const sb = await getSupabase();
-  const { data, error } = await sb
+
+  // 1) Transaksi
+  const { data: txData, error: txErr } = await sb
     .from("transactions")
     .select("*")
     .order("date", { ascending: false });
-  if (error) throw error;
-  const cloud = (data ?? []).map((r) => fromSupabaseRow(r as Record<string, unknown>));
-  // Simpan hasil cloud + tandai "sengaja kosong" bila cloud kosong,
-  // agar hydrate berikutnya tidak memunculkan dummy lagi.
+  if (txErr) throw txErr;
+  const cloud = (txData ?? []).map((r) => fromSupabaseRow(r as Record<string, unknown>));
+
+  // 2) Anggaran kategori
+  const { data: budgetData } = await sb
+    .from("category_budgets")
+    .select("id, category, amount, month");
+  const cloudBudgets: import("@/types").CategoryBudget[] = (budgetData ?? []).map(
+    (r: Record<string, unknown>) => ({
+      id: String(r.id),
+      category: String(r.category),
+      amount: Number(r.amount) || 0,
+      month: r.month ? String(r.month) : undefined,
+    })
+  );
+
+  // 3) Target tabungan
+  const { data: goalData } = await sb
+    .from("savings_goals")
+    .select("id, name, target_amount, current_amount, target_date, color, created_at, updated_at")
+    .order("created_at", { ascending: false });
+  const cloudGoals: import("@/types").SavingsGoal[] = (goalData ?? []).map(
+    (r: Record<string, unknown>) => ({
+      id: String(r.id),
+      name: String(r.name),
+      targetAmount: Number(r.target_amount) || 0,
+      currentAmount: Number(r.current_amount) || 0,
+      targetDate: r.target_date ? String(r.target_date) : undefined,
+      color: r.color ? String(r.color) : undefined,
+      created_at: r.created_at ? String(r.created_at) : undefined,
+      updated_at: r.updated_at ? String(r.updated_at) : undefined,
+    })
+  );
+
   const now = Date.now();
+
+  // Simpan semua ke localStorage
   localStorageHelpers.save(cloud);
   localStorageHelpers.setLastSyncedAt(now);
   if (cloud.length === 0) localStorageHelpers.markIntentionallyEmpty();
   else localStorageHelpers.clearIntentionallyEmpty();
-  set({ transactions: cloud, pushPending: false, lastSyncedAt: now });
+
+  // Budgets: pakai cloud jika ada data, jika tidak jangan timpa (biarkan lokal)
+  if (cloudBudgets.length > 0) {
+    localStorageHelpers.saveBudgets(cloudBudgets);
+  }
+  // Goals: pakai cloud (termasuk array kosong = user memang hapus semua)
+  // Gunakan flag khusus agar bisa dibedakan "belum pernah ada" vs "sudah dihapus semua"
+  localStorageHelpers.saveGoals(cloudGoals);
+  localStorageHelpers.setBudgetsSynced(cloudBudgets.length > 0);
+
+  set({
+    transactions: cloud,
+    budgets: cloudBudgets.length > 0 ? cloudBudgets : get().budgets,
+    savingsGoals: cloudGoals,
+    pushPending: false,
+    lastSyncedAt: now,
+  });
   notifyOtherTabs(); // sinkronkan tab lain di perangkat yang sama
-  void get; // dipanggil untuk konsistensi API helper
+  void get;
 }
 
 /** Beri tahu tab lain di perangkat yang sama bahwa data cloud berubah. */
@@ -248,6 +298,47 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
     }
     localStorageHelpers.saveBudgets(next);
     set({ budgets: next });
+
+    // Sync ke cloud jika login
+    const { userId } = get();
+    if (userId) {
+      try {
+        const sb = await getSupabase();
+        // Cek apakah baris ini sudah ada (untuk dapat `id`-nya)
+        const existing = next[existingIndex >= 0 ? existingIndex : next.length - 1];
+        if (existing && (existing as CategoryBudget & { id?: string }).id) {
+          await sb
+            .from("category_budgets")
+            .update({ amount: Math.max(0, Math.round(amount)), updated_at: new Date().toISOString() })
+            .eq("id", (existing as CategoryBudget & { id?: string }).id!);
+        } else {
+          const { data: inserted } = await sb
+            .from("category_budgets")
+            .insert({
+              user_id: userId,
+              category,
+              amount: Math.max(0, Math.round(amount)),
+              month: month ?? null,
+            })
+            .select("id")
+            .single();
+          // Simpan id cloud ke state lokal agar update/delete berikutnya bisa pakai id
+          if (inserted?.id) {
+            const withId = next.map((b) =>
+              b.category === category && (b.month ?? "") === normMonth
+                ? { ...b, id: String(inserted.id) }
+                : b
+            );
+            localStorageHelpers.saveBudgets(withId);
+            set({ budgets: withId });
+          }
+        }
+        notifyOtherTabs();
+      } catch (err) {
+        console.warn("Sync anggaran ke cloud gagal:", err);
+      }
+    }
+
     notifyOtherTabs();
   },
 
@@ -270,16 +361,81 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
     }
     localStorageHelpers.saveBudgets(current);
     set({ budgets: current });
+
+    // Sync ke cloud jika login — gunakan pull-after-push agar id cloud tersimpan
+    const { userId } = get();
+    if (userId) {
+      try {
+        const sb = await getSupabase();
+        // Hapus semua budgets lama milik user, lalu insert ulang
+        await sb.from("category_budgets").delete().eq("user_id", userId);
+        const rows = current.map((b) => ({
+          user_id: userId,
+          category: b.category,
+          amount: b.amount,
+          month: b.month ?? null,
+        }));
+        if (rows.length > 0) {
+          const { data: inserted } = await sb
+            .from("category_budgets")
+            .insert(rows)
+            .select("id, category, month");
+          // Simpan id cloud ke state
+          if (inserted && inserted.length > 0) {
+            const withIds = current.map((b) => {
+              const match = (inserted as Array<Record<string, unknown>>).find(
+                (r) => r.category === b.category && (r.month ?? null) === (b.month ?? null)
+              );
+              return match ? { ...b, id: String(match.id) } : b;
+            });
+            localStorageHelpers.saveBudgets(withIds);
+            set({ budgets: withIds });
+          }
+        }
+        notifyOtherTabs();
+      } catch (err) {
+        console.warn("Sync multiple anggaran ke cloud gagal:", err);
+      }
+    }
+
     notifyOtherTabs();
   },
 
   removeCategoryBudget: async (category, month) => {
     const normMonth = month ?? "";
+    const toRemove = get().budgets.find(
+      (b) => b.category === category && (b.month ?? "") === normMonth
+    );
     const next = get().budgets.filter(
       (b) => !(b.category === category && (b.month ?? "") === normMonth)
     );
     localStorageHelpers.saveBudgets(next);
     set({ budgets: next });
+
+    const { userId } = get();
+    if (userId && toRemove) {
+      try {
+        const sb = await getSupabase();
+        const cloudId = (toRemove as CategoryBudget & { id?: string }).id;
+        if (cloudId) {
+          await sb.from("category_budgets").delete().eq("id", cloudId);
+        } else {
+          // Fallback: hapus by user_id + category + month
+          let q = sb
+            .from("category_budgets")
+            .delete()
+            .eq("user_id", userId)
+            .eq("category", category);
+          if (month) q = q.eq("month", month);
+          else q = q.is("month", null);
+          await q;
+        }
+        notifyOtherTabs();
+      } catch (err) {
+        console.warn("Hapus anggaran dari cloud gagal:", err);
+      }
+    }
+
     notifyOtherTabs();
   },
 
@@ -296,6 +452,38 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
     const next = [newGoal, ...get().savingsGoals];
     localStorageHelpers.saveGoals(next);
     set({ savingsGoals: next });
+
+    const { userId } = get();
+    if (userId) {
+      try {
+        const sb = await getSupabase();
+        const { data: inserted } = await sb
+          .from("savings_goals")
+          .insert({
+            user_id: userId,
+            name: newGoal.name,
+            target_amount: newGoal.targetAmount,
+            current_amount: newGoal.currentAmount,
+            target_date: newGoal.targetDate ?? null,
+            color: newGoal.color ?? "#2141E0",
+          })
+          .select("id")
+          .single();
+        // Ganti id lokal (dummy) dengan UUID resmi dari cloud
+        if (inserted?.id) {
+          const cloudId = String(inserted.id);
+          const withId = get().savingsGoals.map((g) =>
+            g.id === newGoal.id ? { ...g, id: cloudId } : g
+          );
+          localStorageHelpers.saveGoals(withId);
+          set({ savingsGoals: withId });
+        }
+        notifyOtherTabs();
+      } catch (err) {
+        console.warn("Sync target tabungan ke cloud gagal:", err);
+      }
+    }
+
     notifyOtherTabs();
   },
 
@@ -318,6 +506,28 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
     });
     localStorageHelpers.saveGoals(next);
     set({ savingsGoals: next });
+
+    const { userId } = get();
+    if (userId && isUuid(id)) {
+      try {
+        const sb = await getSupabase();
+        const updatePayload: Record<string, unknown> = {
+          updated_at: new Date().toISOString(),
+        };
+        if (patch.name !== undefined) updatePayload.name = patch.name;
+        if (patch.targetAmount !== undefined)
+          updatePayload.target_amount = Math.max(0, Math.round(patch.targetAmount));
+        if (patch.currentAmount !== undefined)
+          updatePayload.current_amount = Math.max(0, Math.round(patch.currentAmount));
+        if (patch.targetDate !== undefined) updatePayload.target_date = patch.targetDate ?? null;
+        if (patch.color !== undefined) updatePayload.color = patch.color;
+        await sb.from("savings_goals").update(updatePayload).eq("id", id);
+        notifyOtherTabs();
+      } catch (err) {
+        console.warn("Update target tabungan di cloud gagal:", err);
+      }
+    }
+
     notifyOtherTabs();
   },
 
@@ -334,6 +544,24 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
     });
     localStorageHelpers.saveGoals(next);
     set({ savingsGoals: next });
+
+    const { userId } = get();
+    if (userId && isUuid(id)) {
+      try {
+        const goal = next.find((g) => g.id === id);
+        if (goal) {
+          const sb = await getSupabase();
+          await sb
+            .from("savings_goals")
+            .update({ current_amount: goal.currentAmount, updated_at: new Date().toISOString() })
+            .eq("id", id);
+          notifyOtherTabs();
+        }
+      } catch (err) {
+        console.warn("Sync deposit tabungan ke cloud gagal:", err);
+      }
+    }
+
     notifyOtherTabs();
   },
 
@@ -341,6 +569,18 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
     const next = get().savingsGoals.filter((g) => g.id !== id);
     localStorageHelpers.saveGoals(next);
     set({ savingsGoals: next });
+
+    const { userId } = get();
+    if (userId && isUuid(id)) {
+      try {
+        const sb = await getSupabase();
+        await sb.from("savings_goals").delete().eq("id", id);
+        notifyOtherTabs();
+      } catch (err) {
+        console.warn("Hapus target tabungan dari cloud gagal:", err);
+      }
+    }
+
     notifyOtherTabs();
   },
 
@@ -505,6 +745,9 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
     } catch {
       /* noop */
     }
+    // Bersihkan flag sync budgets agar saat login berikutnya
+    // selalu pull data terbaru dari cloud, bukan gunakan cache lokal.
+    localStorageHelpers.setBudgetsSynced(false);
     set({ userId: null, email: null, pushPending: false });
   },
 
@@ -524,39 +767,49 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
    * 1. Head-count `count()` ringan + timestamp perubahan terbaru di cloud.
    * 2. Bila jumlah baris ATAU waktu berubah sejak sync terakhir -> full pull.
    * 3. Bila tidak berubah -> tidak melakukan apa-apa (cache lokal valid).
-   * Ini membuat refresh browser di device B langsung menampilkan data
-   * terbaru dari device A TANPA perlu tombol "Load data dari cloud".
+   * Diberi timeout 8 detik agar tidak memblokir UI bila koneksi lambat.
    */
   refreshIfStale: async () => {
     const { userId, hydrated, pushPending } = get();
     // Jika ada perubahan lokal yang tertunda (pushPending), jangan tiban dengan snapshot cloud
     if (!userId || !hydrated || !isSupabaseConfigured() || pushPending) return;
     try {
-      const sb = await getSupabase();
-      // Kolom updated_at sudah ada di skema (001_init.sql) dan di-set oleh DB.
-      const { count, error: cntErr } = await sb
-        .from("transactions")
-        .select("id", { count: "exact", head: true });
-      if (cntErr) return; // offline / env belum siap -> biarkan cache lokal
-      const { data: latest, error: latErr } = await sb
-        .from("transactions")
-        .select("updated_at")
-        .order("updated_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (latErr) return;
+      // Timeout guard: batalkan jika lebih dari 8 detik agar login tidak lambat
+      const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+      const timer = controller
+        ? setTimeout(() => controller.abort(), 8000)
+        : null;
+      try {
+        const sb = await getSupabase();
+        // Kolom updated_at sudah ada di skema (001_init.sql) dan di-set oleh DB.
+        const { count, error: cntErr } = await sb
+          .from("transactions")
+          .select("id", { count: "exact", head: true });
+        if (cntErr) return; // offline / env belum siap -> biarkan cache lokal
+        const { data: latest, error: latErr } = await sb
+          .from("transactions")
+          .select("updated_at")
+          .order("updated_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (latErr) return;
 
-      const lastChangedMs = latest?.updated_at ? Date.parse(String(latest.updated_at)) : 0;
-      const localCount = get().transactions.length;
-      const staleByCount = count !== null && count !== localCount;
-      const staleByTime = lastChangedMs > get().lastSyncedAt + 1500; // toleransi drift jam
+        const lastChangedMs = latest?.updated_at ? Date.parse(String(latest.updated_at)) : 0;
+        const localCount = get().transactions.length;
+        const staleByCount = count !== null && count !== localCount;
+        const staleByTime = lastChangedMs > get().lastSyncedAt + 1500; // toleransi drift jam
+        // Juga cek budgets/goals jika belum pernah di-pull dari cloud
+        const budgetsNeverSynced = !localStorageHelpers.isBudgetsSynced();
 
-      if (staleByCount || staleByTime) {
-        await applyCloudSnapshot(userId, set, get);
-      } else {
-        // Sinkron dengan cloud — perbarui watermark lokal.
-        localStorageHelpers.setLastSyncedAt(Date.now());
-        set({ lastSyncedAt: Date.now() });
+        if (staleByCount || staleByTime || budgetsNeverSynced) {
+          await applyCloudSnapshot(userId, set, get);
+        } else {
+          // Sinkron dengan cloud — perbarui watermark lokal.
+          localStorageHelpers.setLastSyncedAt(Date.now());
+          set({ lastSyncedAt: Date.now() });
+        }
+      } finally {
+        if (timer) clearTimeout(timer);
       }
     } catch {
       /* gagal cek -> aman, tetap pakai cache lokal */
@@ -564,20 +817,21 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
   },
 
   pushToCloud: async () => {
-    const { userId, transactions } = get();
+    const { userId, transactions, budgets, savingsGoals } = get();
     if (!userId) return;
     set({ syncing: true });
     try {
       const sb = await getSupabase();
 
-      // 1) Baris yang sudah punya UUID valid -> upsert normal (idempotent).
+      // === 1) Transaksi ===
+      // 1a) Baris yang sudah punya UUID valid -> upsert normal (idempotent).
       const uuidRows = transactions.filter((t) => isUuid(t.id)).map(toSupabasePayload);
       for (let i = 0; i < uuidRows.length; i += 500) {
         const { error } = await sb.from("transactions").upsert(uuidRows.slice(i, i + 500));
         if (error) throw error;
       }
 
-      // 2) Baris lokal non-UUID (dummy / id lama) -> kirim TANPA id,
+      // 1b) Baris lokal non-UUID (dummy / id lama) -> kirim TANPA id,
       //    database yang membuat UUID. Hindari duplikasi dengan mengecek
       //    `client_id` yang sudah ada di cloud.
       const legacyRows = transactions.filter((t) => !isUuid(t.id)).map(toSupabasePayload);
@@ -596,7 +850,37 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
         }
       }
 
-      // 3) Setelah upload sukses, tarik balik salinan cloud (berisi UUID resmi)
+      // === 2) Anggaran kategori ===
+      // Strategi: replace-all (hapus semua baris user, insert ulang)
+      await sb.from("category_budgets").delete().eq("user_id", userId);
+      if (budgets.length > 0) {
+        const budgetRows = budgets.map((b) => ({
+          user_id: userId,
+          category: b.category,
+          amount: b.amount,
+          month: b.month ?? null,
+        }));
+        await sb.from("category_budgets").insert(budgetRows);
+      }
+      localStorageHelpers.setBudgetsSynced(true);
+
+      // === 3) Target tabungan ===
+      // Hanya upload goals yang belum ada di cloud (bukan UUID) atau semua jika user minta sync manual
+      const goalRows = savingsGoals.map((g) => ({
+        user_id: userId,
+        name: g.name,
+        target_amount: g.targetAmount,
+        current_amount: g.currentAmount,
+        target_date: g.targetDate ?? null,
+        color: g.color ?? "#2141E0",
+      }));
+      // Hapus semua lalu insert ulang (simple replace strategy untuk manual push)
+      await sb.from("savings_goals").delete().eq("user_id", userId);
+      if (goalRows.length > 0) {
+        await sb.from("savings_goals").insert(goalRows);
+      }
+
+      // 4) Setelah upload sukses, tarik balik salinan cloud (berisi UUID resmi)
       //    agar id lokal & cloud identik — CRUD berikutnya ikut tersinkron.
       await applyCloudSnapshot(userId, set, get);
     } catch (err) {

@@ -4,10 +4,26 @@
 -- Idempotent: aman dijalankan berkali-kali.
 -- =============================================================
 
--- 1) Pastikan schema public dapat diakses oleh client
 grant usage on schema public to anon, authenticated, service_role;
 
--- 2) ---------- CATEGORY BUDGETS ----------
+-- Pastikan tabel transactions ada sebelum diberi grant
+create table if not exists public.transactions (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null references auth.users(id) on delete cascade default auth.uid(),
+  type        text not null check (type in ('income', 'expense')),
+  amount      numeric(14,2) not null check (amount > 0),
+  category    text not null,
+  date        date not null default current_date,
+  note        text default '',
+  client_id   text,
+  updated_at  timestamptz default now(),
+  created_at  timestamptz default now()
+);
+
+alter table public.transactions enable row level security;
+grant all on table public.transactions to anon, authenticated, service_role;
+
+-- ---------- CATEGORY BUDGETS ----------
 create table if not exists public.category_budgets (
   id          uuid primary key default gen_random_uuid(),
   user_id     uuid not null references auth.users(id) on delete cascade default auth.uid(),
@@ -22,7 +38,6 @@ create index if not exists category_budgets_user_idx
   on public.category_budgets (user_id, category);
 
 alter table public.category_budgets enable row level security;
-
 grant all on table public.category_budgets to anon, authenticated, service_role;
 
 drop policy if exists "category_budgets_select_own" on public.category_budgets;
@@ -41,7 +56,7 @@ drop policy if exists "category_budgets_delete_own" on public.category_budgets;
 create policy "category_budgets_delete_own" on public.category_budgets
   for delete using (auth.uid() = user_id);
 
--- 3) ---------- SAVINGS GOALS ----------
+-- ---------- SAVINGS GOALS ----------
 create table if not exists public.savings_goals (
   id             uuid primary key default gen_random_uuid(),
   user_id        uuid not null references auth.users(id) on delete cascade default auth.uid(),
@@ -58,7 +73,6 @@ create index if not exists savings_goals_user_idx
   on public.savings_goals (user_id, created_at desc);
 
 alter table public.savings_goals enable row level security;
-
 grant all on table public.savings_goals to anon, authenticated, service_role;
 
 drop policy if exists "savings_goals_select_own" on public.savings_goals;
@@ -77,10 +91,5 @@ drop policy if exists "savings_goals_delete_own" on public.savings_goals;
 create policy "savings_goals_delete_own" on public.savings_goals
   for delete using (auth.uid() = user_id);
 
--- 4) ---------- RE-GRANT TRANSACTIONS & PROFILES ----------
-grant all on table public.transactions to anon, authenticated, service_role;
-grant all on table public.profiles to anon, authenticated, service_role;
-
--- 5) ---------- REFRESH POSTGREST SCHEMA CACHE ----------
--- Menghilangkan error CORS / 500 karena PostgREST mendeteksi tabel baru secara instan
+-- Segarkan schema cache PostgREST agar API Supabase langsung mengenali tabel
 notify pgrst, 'reload schema';
