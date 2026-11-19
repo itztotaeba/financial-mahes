@@ -7,7 +7,7 @@
  */
 import { create } from "zustand";
 import type { Transaction, CategoryBudget, SavingsGoal } from "@/types";
-import { localStorageHelpers } from "@/lib/storage";
+import { localStorageHelpers, DEFAULT_CATEGORY_BUDGETS } from "@/lib/storage";
 import { toSupabasePayload, fromSupabaseRow, isUuid, isSupabaseConfigured } from "@/lib/supabase";
 import { generateId, parseDate } from "@/lib/utils";
 import { getSupabaseClient, normalizeSupabaseUrl } from "@/lib/supabaseClient";
@@ -94,6 +94,54 @@ function isNotFoundError(err: unknown): boolean {
     e.statusCode === 404 ||
     /not found/i.test(String(e.message ?? ""))
   );
+}
+
+/**
+ * Kenali error Postgres 42P10: "there is no unique or exclusion constraint
+ * matching the ON CONFLICT specification". Terjadi bila upsert dengan
+ * `onConflict` dikirim ke database yang belum punya unique index
+ * (migration 006 belum dijalankan). Strategi cadangan: replace-by-key
+ * (hapus baris lama via filter, lalu insert) — TIDAK memakai ON CONFLICT
+ * sama sekali sehingga selalu berhasil walau index belum ada.
+ */
+function isMissingUniqueConstraintError(err: unknown): boolean {
+  const e = err as { code?: string; message?: string } | null;
+  if (!e) return false;
+  return (
+    e.code === "42P10" ||
+    /ON CONFLICT/i.test(String(e.message ?? ""))
+  );
+}
+
+/**
+ * Ganti satu anggaran (user_id + category + month) di cloud TANPA upsert:
+ * delete by key lalu insert, dan kembalikan id baru hasil insert.
+ */
+async function replaceBudgetByFilter(
+  sb: Awaited<ReturnType<typeof getSupabase>>,
+  userId: string,
+  budget: { category: string; amount: number; month: string | null }
+): Promise<string | null> {
+  let del = sb
+    .from("category_budgets")
+    .delete()
+    .eq("user_id", userId)
+    .eq("category", budget.category);
+  del = budget.month ? del.eq("month", budget.month) : del.is("month", null);
+  await del;
+
+  const { data: inserted } = await sb
+    .from("category_budgets")
+    .insert({
+      user_id: userId,
+      category: budget.category,
+      amount: budget.amount,
+      month: budget.month,
+    })
+    .select("id")
+    .single();
+
+  return inserted?.id ? String(inserted.id) : null;
 }
 
 /**
@@ -209,7 +257,8 @@ function translateAuthError(message: string): string {
 async function applyCloudSnapshot(
   _userId: string,
   set: (partial: Partial<FinanceState>) => void,
-  get: () => FinanceState
+  get: () => FinanceState,
+  opts?: { preservePendingLocalBudgets?: boolean }
 ): Promise<void> {
   const sb = await getSupabase();
 
@@ -272,8 +321,31 @@ async function applyCloudSnapshot(
   // Budgets: pakai cloud jika ada data, jika tidak jangan timpa (biarkan lokal).
   // Khusus kegagalan 404 (tabel belum ada / URL salah): JANGAN tandai synced,
   // agar refreshIfStale mencoba tarik ulang setelah konfigurasi/skema diperbaiki.
-  if (cloudBudgets.length > 0) {
+  // Safety-net: bila cloud mengembalikan array KOSONG padahal local masih berisi
+  // nilai DEFAULT (belum pernah sync sukses), jangan timpa local — biarkan nilai
+  // default tersimpan & ter-push saat user mengubahnya. Ini mencegah target
+  // anggaran "kembali ke default" setiap logout/login ketika push cloud gagal.
+  const localBudgets = get().budgets;
+  // Local dianggap "masih default" bila persis sama dengan DEFAULT_CATEGORY_BUDGETS
+  // (artinya belum pernah diubah user / belum pernah sync sukses dari cloud).
+  const localLooksDefault =
+    localBudgets.length === DEFAULT_CATEGORY_BUDGETS.length &&
+    JSON.stringify(localBudgets.map((b) => [b.category, b.amount, b.month ?? ""])) ===
+      JSON.stringify(DEFAULT_CATEGORY_BUDGETS.map((b) => [b.category, b.amount, b.month ?? ""]));
+  // Bila ada perubahan lokal yang belum sempat ter-push (mis. push gagal karena
+  // error 42P10), JANGAN timpa anggaran lokal dengan snapshot cloud —
+  // kalau tidak, target anggaran kembali ke default setiap logout/login.
+  const preserveLocalBudgets =
+    opts?.preservePendingLocalBudgets === true || get().pushPending === true;
+
+  if (preserveLocalBudgets) {
+    // biarkan budgets lokal apa adanya; akan di-push ulang oleh pushToCloud
+  } else if (cloudBudgets.length > 0) {
     localStorageHelpers.saveBudgets(cloudBudgets);
+  } else if (!cloudBudgetFetchFailed && !localLooksDefault) {
+    // Cloud benar-benar kosong & local sudah pernah disinkronkan berarti
+    // user memang menghapus semua anggaran di device lain -> sinkron kosong.
+    localStorageHelpers.saveBudgets([]);
   }
   // Goals: pakai cloud (termasuk array kosong = user memang hapus semua)
   // Gunakan flag khusus agar bisa dibedakan "belum pernah ada" vs "sudah dihapus semua"
@@ -284,9 +356,18 @@ async function applyCloudSnapshot(
 
   set({
     transactions: cloud,
-    budgets: cloudBudgets.length > 0 ? cloudBudgets : get().budgets,
+    budgets: preserveLocalBudgets
+      ? localBudgets
+      : cloudBudgets.length > 0
+        ? cloudBudgets
+        : !cloudBudgetFetchFailed && !localLooksDefault
+          ? []
+          : localBudgets,
     savingsGoals: cloudGoals,
-    pushPending: false,
+    // Bila ada perubahan lokal yang tertunda (push gagal), JANGAN hapus flag
+    // pushPending — agar refreshIfStale tidak menimpa anggaran lokal dengan
+    // snapshot cloud dan pushToCloud bisa mencoba ulang nanti.
+    pushPending: preserveLocalBudgets ? true : false,
     lastSyncedAt: now,
   });
   notifyOtherTabs(); // sinkronkan tab lain di perangkat yang sama
@@ -385,6 +466,8 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
             .eq("id", localId);
           if (updErr) {
             if (isNotFoundError(updErr)) throw updErr;
+            // Fallback upsert dengan id — bila unique index belum ada (42P10),
+            // pakai replace-by-key agar tetap sinkron tanpa ON CONFLICT.
             const { error: upErr } = await sb.from("category_budgets").upsert({
               id: localId,
               user_id: userId,
@@ -392,31 +475,62 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
               amount: Math.max(0, Math.round(amount)),
               month: month ?? null,
             });
-            if (upErr) throw upErr;
+            if (upErr && !isMissingUniqueConstraintError(upErr)) throw upErr;
+            if (upErr) {
+              const newId = await replaceBudgetByFilter(sb, userId, {
+                category,
+                amount: Math.max(0, Math.round(amount)),
+                month: month ?? null,
+              });
+              if (newId && newId !== localId) {
+                const remapped = next.map((b) =>
+                  (b as CategoryBudget & { id?: string }).id === localId
+                    ? { ...b, id: newId }
+                    : b
+                );
+                localStorageHelpers.saveBudgets(remapped);
+                set({ budgets: remapped });
+              }
+            }
           }
         } else {
           // Upsert berbasis unique index (user_id, category, coalesce(month,''))
           // — migration 006 — sehingga tidak pernah menghasilkan baris ganda
           // walau device lain membuat anggaran serupa lebih dulu.
+          // Bila database belum punya unique index tsb (error 42P10),
+          // fallback ke replace-by-key (delete by filter + insert) yang
+          // tidak memakai ON CONFLICT sama sekali.
+          const payload = {
+            user_id: userId,
+            category,
+            amount: Math.max(0, Math.round(amount)),
+            month: month ?? null,
+          };
           const { data: inserted, error: insErr } = await sb
             .from("category_budgets")
-            .upsert(
-              {
-                user_id: userId,
-                category,
-                amount: Math.max(0, Math.round(amount)),
-                month: month ?? null,
-              },
-              { onConflict: "user_id,category,month" }
-            )
+            .upsert(payload, { onConflict: "user_id,category,month" })
             .select("id")
             .single();
-          if (insErr) throw insErr;
+
+          let finalId: string | null = inserted?.id ? String(inserted.id) : null;
+
+          if (insErr) {
+            if (!isMissingUniqueConstraintError(insErr)) throw insErr;
+            console.warn(
+              "Unique index (user_id, category, month) belum ada di database — memakai fallback delete+insert. Jalankan migration 006 di Supabase."
+            );
+            finalId = await replaceBudgetByFilter(sb, userId, {
+              category,
+              amount: payload.amount,
+              month: payload.month,
+            });
+          }
+
           // Simpan id cloud ke state lokal agar update/delete berikutnya bisa pakai id
-          if (inserted?.id) {
+          if (finalId) {
             const withId = next.map((b) =>
               b.category === category && (b.month ?? "") === normMonth
-                ? { ...b, id: String(inserted.id) }
+                ? { ...b, id: finalId }
                 : b
             );
             localStorageHelpers.saveBudgets(withId);
@@ -800,7 +914,7 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
     // Setelah login, SELALU tarik data akun dari Supabase dan jadikan sumber
     // tampilan (sekaligus cache lokal). Tidak ada lagi prompt "upload dummy".
     try {
-      await applyCloudSnapshot(data.user?.id ?? "", set, get);
+      await applyCloudSnapshot(data.user?.id ?? "", set, get, { preservePendingLocalBudgets: true });
     } catch {
       /* gagal tarik cloud -> tetap tampilkan data lokal, sync manual via Pengaturan */
     }
