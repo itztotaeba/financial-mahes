@@ -6,9 +6,12 @@
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
 import { Card } from "@/components/ui/primitives";
 import { formatIDR } from "@/lib/utils";
+import { PrivacyNumber } from "@/components/PrivacyNumber";
+import { usePrivacy } from "@/contexts/PrivacyContext";
 import type { CategorySlice } from "@/lib/selectors";
 
 export function CategoryPie({ data }: { data: CategorySlice[] }) {
+  const { isPrivacyMode } = usePrivacy();
   const top = data.slice(0, 6); // batasi agar tetap mudah dipindai
   const othersValue = data.slice(6).reduce((a, b) => a + b.value, 0);
   const chartData =
@@ -47,7 +50,10 @@ export function CategoryPie({ data }: { data: CategorySlice[] }) {
                   boxShadow: "0 8px 24px rgba(0,0,0,.12)",
                   fontSize: 12,
                 }}
-                formatter={(value, name) => [formatIDR(Number(value)), String(name)]}
+                formatter={(value, name) => [
+                  isPrivacyMode ? "Rp •••••" : formatIDR(Number(value)),
+                  String(name),
+                ]}
               />
             </PieChart>
           </ResponsiveContainer>
@@ -56,7 +62,7 @@ export function CategoryPie({ data }: { data: CategorySlice[] }) {
             <div className="text-center">
               <p className="text-[10px] uppercase tracking-wide text-muted-ink">Total</p>
               <p className="font-data max-w-[90px] truncate text-sm font-extrabold text-ink">
-                {formatIDR(chartData.reduce((a, b) => a + b.value, 0))}
+                <PrivacyNumber value={chartData.reduce((a, b) => a + b.value, 0)} />
               </p>
             </div>
           </div>

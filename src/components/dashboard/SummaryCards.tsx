@@ -6,7 +6,7 @@
  */
 import { Wallet, TrendingUp, TrendingDown } from "lucide-react";
 import { Card } from "@/components/ui/primitives";
-import { formatIDR } from "@/lib/utils";
+import { PrivacyNumber } from "@/components/PrivacyNumber";
 import type { Summary } from "@/lib/selectors";
 
 export function SummaryCards({ summary }: { summary: Summary }) {
@@ -21,7 +21,7 @@ export function SummaryCards({ summary }: { summary: Summary }) {
           </span>
         </div>
         <p className="font-data mt-3 text-2xl font-extrabold tracking-tight sm:text-3xl">
-          {formatIDR(summary.balance)}
+          <PrivacyNumber value={summary.balance} />
         </p>
         <p className="mt-1 text-xs text-white/45">Akumulasi seluruh transaksi tercatat</p>
       </div>
@@ -35,10 +35,10 @@ export function SummaryCards({ summary }: { summary: Summary }) {
           </span>
         </div>
         <p className="font-data mt-3 text-2xl font-extrabold tracking-tight text-income sm:text-3xl">
-          {formatIDR(summary.totalIncome)}
+          <PrivacyNumber value={summary.totalIncome} />
         </p>
         <p className="mt-1 text-xs text-muted-ink">
-          Bulan ini: <span className="font-data font-semibold text-ink">{formatIDR(summary.monthIncome)}</span>
+          Bulan ini: <span className="font-data font-semibold text-ink"><PrivacyNumber value={summary.monthIncome} /></span>
         </p>
       </Card>
 
@@ -51,10 +51,10 @@ export function SummaryCards({ summary }: { summary: Summary }) {
           </span>
         </div>
         <p className="font-data mt-3 text-2xl font-extrabold tracking-tight text-expense sm:text-3xl">
-          {formatIDR(summary.totalExpense)}
+          <PrivacyNumber value={summary.totalExpense} />
         </p>
         <p className="mt-1 text-xs text-muted-ink">
-          Bulan ini: <span className="font-data font-semibold text-ink">{formatIDR(summary.monthExpense)}</span>
+          Bulan ini: <span className="font-data font-semibold text-ink"><PrivacyNumber value={summary.monthExpense} /></span>
         </p>
       </Card>
     </div>

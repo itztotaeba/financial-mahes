@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { PieChart, Target, ArrowRight, ShieldCheck, AlertTriangle } from "lucide-react";
 import { Card, Button, Badge } from "@/components/ui/primitives";
-import { formatIDR } from "@/lib/utils";
+import { formatIDR as formatIDR2 } from "@/lib/utils";
+import { PrivacyNumber } from "@/components/PrivacyNumber";
 import { useCategoryBudgets, useSavingsGoalsData } from "@/lib/selectors";
 
 export function BudgetSavingsWidget() {
@@ -46,11 +47,11 @@ export function BudgetSavingsWidget() {
           <div className="mt-4 grid grid-cols-3 gap-2 rounded-2xl bg-black/[0.02] p-3 text-xs">
             <div>
               <p className="text-[10px] text-muted-ink">Batas Anggaran</p>
-              <p className="font-bold text-ink font-data truncate">{formatIDR(totalBudget)}</p>
+              <p className="font-bold text-ink font-data truncate"><PrivacyNumber value={totalBudget} /></p>
             </div>
             <div>
               <p className="text-[10px] text-muted-ink">Terpakai</p>
-              <p className="font-bold text-expense font-data truncate">{formatIDR(totalSpent)}</p>
+              <p className="font-bold text-expense font-data truncate"><PrivacyNumber value={totalSpent} /></p>
             </div>
             <div>
               <p className="text-[10px] text-muted-ink">Sisa Pagu</p>
@@ -59,7 +60,7 @@ export function BudgetSavingsWidget() {
                   totalRemaining < 0 ? "text-expense" : "text-income"
                 }`}
               >
-                {totalRemaining < 0 ? `-${formatIDR(Math.abs(totalRemaining))}` : formatIDR(totalRemaining)}
+                {totalRemaining < 0 ? <PrivacyNumber value={`-${formatIDR2(Math.abs(totalRemaining))}`} /> : <PrivacyNumber value={totalRemaining} />}
               </p>
             </div>
           </div>
@@ -112,15 +113,15 @@ export function BudgetSavingsWidget() {
           <div className="mt-4 grid grid-cols-3 gap-2 rounded-2xl bg-black/[0.02] p-3 text-xs">
             <div>
               <p className="text-[10px] text-muted-ink">Total Terkumpul</p>
-              <p className="font-bold text-income font-data truncate">{formatIDR(totalCollected)}</p>
+              <p className="font-bold text-income font-data truncate"><PrivacyNumber value={totalCollected} /></p>
             </div>
             <div>
               <p className="text-[10px] text-muted-ink">Total Target</p>
-              <p className="font-bold text-ink font-data truncate">{formatIDR(totalTarget)}</p>
+              <p className="font-bold text-ink font-data truncate"><PrivacyNumber value={totalTarget} /></p>
             </div>
             <div>
               <p className="text-[10px] text-muted-ink">Sisa Kebutuhan</p>
-              <p className="font-bold text-primary font-data truncate">{formatIDR(savingsRemaining)}</p>
+              <p className="font-bold text-primary font-data truncate"><PrivacyNumber value={savingsRemaining} /></p>
             </div>
           </div>
 

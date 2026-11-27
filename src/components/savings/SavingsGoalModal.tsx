@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { X, Check, Target, Calendar } from "lucide-react";
 import { Button, Input, Label } from "@/components/ui/primitives";
 import { formatIDR } from "@/lib/utils";
+import { PrivacyNumber } from "@/components/PrivacyNumber";
 import { useFinanceStore } from "@/store/useFinanceStore";
 import type { SavingsGoal } from "@/types";
 
@@ -147,7 +148,7 @@ export function SavingsGoalModal({
                 <Label className="mb-0">Jumlah Target (Rp)</Label>
                 {targetAmount > 0 && (
                   <span className="text-[11px] font-bold text-primary font-data">
-                    {formatIDR(targetAmount)}
+                    {<PrivacyNumber value={targetAmount} />}
                   </span>
                 )}
               </div>
@@ -166,7 +167,7 @@ export function SavingsGoalModal({
                 <Label className="mb-0">Sudah Terkumpul (Rp)</Label>
                 {currentAmount > 0 && (
                   <span className="text-[11px] font-bold text-income font-data">
-                    {formatIDR(currentAmount)}
+                    {<PrivacyNumber value={currentAmount} />}
                   </span>
                 )}
               </div>
@@ -224,7 +225,7 @@ export function SavingsGoalModal({
               <div className="flex justify-between">
                 <span>Sisa yang dibutuhkan:</span>
                 <span className="font-bold text-primary font-data">
-                  {formatIDR(Math.max(0, targetAmount - currentAmount))}
+                  {<PrivacyNumber value={Math.max(0, targetAmount - currentAmount)} />}
                 </span>
               </div>
               <div className="flex justify-between">

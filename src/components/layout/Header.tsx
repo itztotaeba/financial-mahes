@@ -11,6 +11,7 @@ import { CloudUpload, LogOut, UserRound, Settings } from "lucide-react";
 import { useFinanceStore } from "@/store/useFinanceStore";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { Button } from "@/components/ui/primitives";
+import { PrivacyToggle } from "@/components/PrivacyToggle";
 
 export function Header({
   title,
@@ -35,6 +36,8 @@ export function Header({
       </div>
 
       <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+        {/* Tombol privasi 👁️/🙈 — sembunyikan/tampilkan semua angka uang (klien saja) */}
+        <PrivacyToggle />
         {email ? (
           <>
             <div className="glass-pill hidden items-center gap-2 py-1 pl-1 pr-3 sm:flex">

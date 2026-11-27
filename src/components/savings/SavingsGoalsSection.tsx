@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Card, Button, Badge } from "@/components/ui/primitives";
 import { formatIDR, formatDate } from "@/lib/utils";
+import { PrivacyNumber } from "@/components/PrivacyNumber";
 import { useFinanceStore } from "@/store/useFinanceStore";
 import { useSavingsGoalsData } from "@/lib/selectors";
 import type { SavingsGoal } from "@/types";
@@ -87,7 +88,7 @@ export function SavingsGoalsSection() {
               Total Target Impian
             </p>
             <p className="mt-1 text-base sm:text-lg font-extrabold text-ink font-data">
-              {formatIDR(totalTarget)}
+              {<PrivacyNumber value={totalTarget} />}
             </p>
             <p className="text-[10px] text-muted-ink mt-0.5">{goals.length} target terdaftar</p>
           </div>
@@ -97,7 +98,7 @@ export function SavingsGoalsSection() {
               Total Terkumpul
             </p>
             <p className="mt-1 text-base sm:text-lg font-extrabold text-income font-data">
-              {formatIDR(totalCollected)}
+              {<PrivacyNumber value={totalCollected} />}
             </p>
             <p className="text-[10px] text-muted-ink mt-0.5">Dana yang sudah disisihkan</p>
           </div>
@@ -107,7 +108,7 @@ export function SavingsGoalsSection() {
               Sisa yang Dibutuhkan
             </p>
             <p className="mt-1 text-base sm:text-lg font-extrabold text-primary font-data">
-              {formatIDR(totalRemaining)}
+              {<PrivacyNumber value={totalRemaining} />}
             </p>
             <p className="text-[10px] text-muted-ink mt-0.5">Untuk mencapai 100% target</p>
           </div>
@@ -215,19 +216,19 @@ export function SavingsGoalsSection() {
                     <div>
                       <p className="text-[10px] text-muted-ink">Terkumpul</p>
                       <p className="font-bold text-income font-data truncate">
-                        {formatIDR(goal.currentAmount)}
+                        {<PrivacyNumber value={goal.currentAmount} />}
                       </p>
                     </div>
                     <div>
                       <p className="text-[10px] text-muted-ink">Target</p>
                       <p className="font-bold text-ink font-data truncate">
-                        {formatIDR(goal.targetAmount)}
+                        {<PrivacyNumber value={goal.targetAmount} />}
                       </p>
                     </div>
                     <div>
                       <p className="text-[10px] text-muted-ink">Sisa Dibutuhkan</p>
                       <p className="font-bold text-primary font-data truncate">
-                        {formatIDR(remainingAmount)}
+                        {<PrivacyNumber value={remainingAmount} />}
                       </p>
                     </div>
                   </div>

@@ -13,6 +13,7 @@ import {
 import { Card, Button, Input, Label, Badge } from "@/components/ui/primitives";
 import { Transaction } from "@/types";
 import { formatIDR, todayISO, dateOnly } from "@/lib/utils";
+import { PrivacyNumber } from "@/components/PrivacyNumber";
 import { exportFinancialReportToXLSX, filterTransactionsByDate } from "@/lib/exportExcel";
 
 interface ExportExcelCardProps {
@@ -237,21 +238,21 @@ export function ExportExcelCard({ transactions, userEmail, onSuccess }: ExportEx
               <div className="rounded-xl bg-income/10 p-2 border border-income/15">
                 <p className="text-[10px] font-semibold text-income uppercase tracking-wider">Pemasukan</p>
                 <p className="font-data mt-0.5 text-xs font-bold text-income truncate">
-                  {formatIDR(summary.income)}
+                  {<PrivacyNumber value={summary.income} />}
                 </p>
               </div>
 
               <div className="rounded-xl bg-expense/10 p-2 border border-expense/15">
                 <p className="text-[10px] font-semibold text-expense uppercase tracking-wider">Pengeluaran</p>
                 <p className="font-data mt-0.5 text-xs font-bold text-expense truncate">
-                  {formatIDR(summary.expense)}
+                  {<PrivacyNumber value={summary.expense} />}
                 </p>
               </div>
 
               <div className="rounded-xl bg-primary/10 p-2 border border-primary/15">
                 <p className="text-[10px] font-semibold text-primary uppercase tracking-wider">Saldo Bersih</p>
                 <p className="font-data mt-0.5 text-xs font-bold text-primary truncate">
-                  {formatIDR(summary.net)}
+                  {<PrivacyNumber value={summary.net} />}
                 </p>
               </div>
             </div>

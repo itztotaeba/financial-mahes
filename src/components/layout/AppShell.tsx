@@ -18,6 +18,7 @@ import { usePathname } from "next/navigation";
 import { DesktopSidebar } from "./Sidebar";
 import { BottomTabBar } from "./BottomTabBar";
 import { GlobalTransactionModal } from "@/components/transaction/GlobalTransactionModal";
+import { PrivacyProvider } from "@/contexts/PrivacyContext";
 import { useFinanceStore } from "@/store/useFinanceStore";
 import { localStorageHelpers } from "@/lib/storage";
 
@@ -144,21 +145,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   // Halaman login punya tampilan sendiri (tanpa sidebar/modal).
   if (pathname?.startsWith("/login")) {
-    return <>{children}</>;
+    return <PrivacyProvider>{children}</PrivacyProvider>;
   }
 
   return (
-    <div className="min-h-screen text-ink">
-      {/* Padding atas lebih lega (pt-8 sm:pt-10) — judul tidak lagi mepet
-          ke tepi atas browser; ruang bawah ekstra untuk BottomTabBar mobile. */}
-      <div className="mx-auto flex max-w-[1400px] gap-6 px-4 pb-24 pt-8 sm:px-6 sm:pt-10 md:pb-8 lg:gap-9 lg:px-10 xl:pt-12">
-        <DesktopSidebar />
-        <main className="min-w-0 flex-1">{children}</main>
+    <PrivacyProvider>
+      <div className="min-h-screen text-ink">
+        {/* Padding atas lebih lega (pt-8 sm:pt-10) — judul tidak lagi mepet
+            ke tepi atas browser; ruang bawah ekstra untuk BottomTabBar mobile. */}
+        <div className="mx-auto flex max-w-[1400px] gap-6 px-4 pb-24 pt-8 sm:px-6 sm:pt-10 md:pb-8 lg:gap-9 lg:px-10 xl:pt-12">
+          <DesktopSidebar />
+          <main className="min-w-0 flex-1">{children}</main>
+        </div>
+        {/* Navigasi bawah khusus mobile — menggantikan hamburger + drawer. */}
+        <BottomTabBar />
+        {/* Modal global tambah/edit transaksi — dipanggil via window.openTransactionModal */}
+        <GlobalTransactionModal />
       </div>
-      {/* Navigasi bawah khusus mobile — menggantikan hamburger + drawer. */}
-      <BottomTabBar />
-      {/* Modal global tambah/edit transaksi — dipanggil via window.openTransactionModal */}
-      <GlobalTransactionModal />
-    </div>
+    </PrivacyProvider>
   );
 }

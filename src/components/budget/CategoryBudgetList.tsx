@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Plus, Edit2, CheckCircle2, AlertTriangle, AlertCircle, TrendingDown } from "lucide-react";
 import { Card, Button, Badge } from "@/components/ui/primitives";
 import { formatIDR, formatIDRCompact } from "@/lib/utils";
+import { usePrivacy } from "@/contexts/PrivacyContext";
+import { PrivacyNumber } from "@/components/PrivacyNumber";
 import { CATEGORY_MAP } from "@/types";
 import { useCategoryBudgets } from "@/lib/selectors";
 import { BudgetModal } from "./BudgetModal";
@@ -13,6 +15,7 @@ interface CategoryBudgetListProps {
 }
 
 export function CategoryBudgetList({ month }: CategoryBudgetListProps) {
+  const { isPrivacyMode } = usePrivacy();
   const {
     categories,
     totalBudget,
@@ -101,7 +104,7 @@ export function CategoryBudgetList({ month }: CategoryBudgetListProps) {
               Total Anggaran
             </p>
             <p className="mt-1 text-base sm:text-lg font-extrabold text-ink font-data">
-              {formatIDR(totalBudget)}
+              {<PrivacyNumber value={totalBudget} />}
             </p>
             <p className="text-[10px] text-muted-ink mt-0.5">Batas yang ditetapkan</p>
           </div>
@@ -111,7 +114,7 @@ export function CategoryBudgetList({ month }: CategoryBudgetListProps) {
               Total Terpakai
             </p>
             <p className="mt-1 text-base sm:text-lg font-extrabold text-expense font-data">
-              {formatIDR(totalSpent)}
+              {<PrivacyNumber value={totalSpent} />}
             </p>
             <p className="text-[10px] text-muted-ink mt-0.5">Pengeluaran bulan ini</p>
           </div>
@@ -126,8 +129,8 @@ export function CategoryBudgetList({ month }: CategoryBudgetListProps) {
               }`}
             >
               {totalRemaining < 0
-                ? `-${formatIDR(Math.abs(totalRemaining))}`
-                : formatIDR(totalRemaining)}
+                ? `-${isPrivacyMode ? "•••••" : formatIDR(Math.abs(totalRemaining))}`
+                : <PrivacyNumber value={totalRemaining} />}
             </p>
             <p className="text-[10px] text-muted-ink mt-0.5">
               {totalRemaining < 0 ? "Melebihi pagu" : "Dana masih tersedia"}
@@ -228,7 +231,7 @@ export function CategoryBudgetList({ month }: CategoryBudgetListProps) {
                       </div>
                       <p className="text-xs text-muted-ink mt-0.5">
                         {hasBudget
-                          ? `Batas bulanan: ${formatIDR(item.budgetAmount)}`
+                          ? `Batas bulanan: ${isPrivacyMode ? "Rp •••••" : formatIDR(item.budgetAmount)}`
                           : "Klik 'Atur Batas' untuk mulai menetapkan pagu anggaran"}
                       </p>
                     </div>
@@ -238,7 +241,7 @@ export function CategoryBudgetList({ month }: CategoryBudgetListProps) {
                     <div className="text-right">
                       <div className="text-xs text-muted-ink">Terpakai / Sisa</div>
                       <div className="text-sm font-bold text-ink">
-                        <span className="text-expense font-data">{formatIDR(item.spentAmount)}</span>
+                        <span className="text-expense font-data"><PrivacyNumber value={item.spentAmount} /></span>
                         {hasBudget && (
                           <>
                             <span className="text-muted-ink mx-1">/</span>
@@ -248,8 +251,8 @@ export function CategoryBudgetList({ month }: CategoryBudgetListProps) {
                               }`}
                             >
                               {isOverBudget
-                                ? `Over ${formatIDR(Math.abs(item.remainingAmount))}`
-                                : `Sisa ${formatIDR(item.remainingAmount)}`}
+                                ? `Over ${isPrivacyMode ? "•••••" : formatIDR(Math.abs(item.remainingAmount))}`
+                                : `Sisa ${isPrivacyMode ? "•••••" : formatIDR(item.remainingAmount)}`}
                             </span>
                           </>
                         )}
@@ -296,7 +299,7 @@ export function CategoryBudgetList({ month }: CategoryBudgetListProps) {
                   </div>
                 ) : (
                   <div className="mt-3 flex items-center justify-between rounded-xl bg-black/[0.02] px-3 py-1.5 text-xs text-muted-ink">
-                    <span>Pengeluaran tercatat: {formatIDR(item.spentAmount)}</span>
+                    <span>Pengeluaran tercatat: <PrivacyNumber value={item.spentAmount} /></span>
                     <button
                       onClick={() => handleEditCategory(item.category, item.budgetAmount)}
                       className="text-primary font-semibold hover:underline"

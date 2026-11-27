@@ -7,7 +7,8 @@
 import { Pencil, Trash2 } from "lucide-react";
 import type { Transaction } from "@/types";
 import { CATEGORY_MAP } from "@/types";
-import { cn, formatIDR, formatDateTime } from "@/lib/utils";
+import { cn, formatDateTime } from "@/lib/utils";
+import { PrivacyNumber } from "@/components/PrivacyNumber";
 
 export function TransactionItem({
   tx,
@@ -46,8 +47,8 @@ export function TransactionItem({
           isIncome ? "text-income" : "text-expense"
         )}
       >
-        {isIncome ? "+" : "−"}
-        {formatIDR(tx.amount)}
+        <span aria-hidden>{isIncome ? "+" : "−"}</span>
+        <PrivacyNumber value={tx.amount} />
       </p>
 
       {/* Aksi — SELALU tampil di mobile (tablet ke bawah) sebagai icon-button;
