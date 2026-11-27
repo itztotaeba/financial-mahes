@@ -23,10 +23,13 @@ import { PeriodComparison } from "@/components/comparison/PeriodComparison";
 import { useFinanceStore } from "@/store/useFinanceStore";
 import { CATEGORY_MAP } from "@/types";
 import { formatIDR, formatIDRCompact , dateOnly} from "@/lib/utils";
+import { PrivacyNumber } from "@/components/PrivacyNumber";
+import { usePrivacy } from "@/contexts/PrivacyContext";
 
 export default function LaporanPage() {
   const hydrated = useFinanceStore((s) => s.hydrated);
   const transactions = useFinanceStore((s) => s.transactions);
+  const { isPrivacyMode } = usePrivacy();
 
   // ---- Rekap per bulan (maks 6 bulan terakhir yang ada datanya) ----
   const monthly = useMemo(() => {
@@ -106,7 +109,7 @@ export default function LaporanPage() {
                     tickLine={false}
                   />
                   <YAxis
-                    tickFormatter={(v: number) => formatIDRCompact(v)}
+                    tickFormatter={(v: number) => (isPrivacyMode ? "•••" : formatIDRCompact(v))}
                     tick={{ fontSize: 11, fill: "#151516", opacity: 0.5, fontFamily: "var(--font-data)" }}
                     axisLine={false}
                     tickLine={false}
@@ -119,7 +122,7 @@ export default function LaporanPage() {
                       boxShadow: "0 8px 24px rgba(0,0,0,.12)",
                       fontSize: 12,
                     }}
-                    formatter={(value) => formatIDR(Number(value))}
+                    formatter={(value) => (isPrivacyMode ? "Rp •••••" : formatIDR(Number(value)))}
                   />
                   <Legend iconType="circle" iconSize={8} />
                   <Bar dataKey="Pemasukan" fill="#4FB279" radius={[6, 6, 0, 0]} maxBarSize={28} />
@@ -162,10 +165,10 @@ export default function LaporanPage() {
                           {row.count}
                         </td>
                         <td className="font-data py-3 pr-3 text-right font-semibold tabular-nums text-income">
-                          {row.income > 0 ? formatIDR(row.income) : "—"}
+                          {row.income > 0 ? <PrivacyNumber value={row.income} /> : "—"}
                         </td>
                         <td className="font-data py-3 text-right font-semibold tabular-nums text-expense">
-                          {row.expense > 0 ? formatIDR(row.expense) : "—"}
+                          {row.expense > 0 ? <PrivacyNumber value={row.expense} /> : "—"}
                         </td>
                       </tr>
                     );

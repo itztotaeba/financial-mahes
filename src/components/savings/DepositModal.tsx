@@ -4,6 +4,8 @@ import { useState } from "react";
 import { X, Check, PiggyBank } from "lucide-react";
 import { Button, Input, Label } from "@/components/ui/primitives";
 import { formatIDR } from "@/lib/utils";
+import { usePrivacy } from "@/contexts/PrivacyContext";
+import { PrivacyNumber } from "@/components/PrivacyNumber";
 import { useFinanceStore } from "@/store/useFinanceStore";
 import type { SavingsGoal } from "@/types";
 
@@ -16,6 +18,7 @@ interface DepositModalProps {
 const DEPOSIT_PRESETS = [50_000, 100_000, 250_000, 500_000, 1_000_000];
 
 export function DepositModal({ isOpen, onClose, goal }: DepositModalProps) {
+  const isP = usePrivacy().isPrivacyMode;
   const [amountStr, setAmountStr] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -81,15 +84,15 @@ export function DepositModal({ isOpen, onClose, goal }: DepositModalProps) {
         <div className="my-4 rounded-2xl bg-black/[0.03] p-3 text-xs space-y-1">
           <div className="flex justify-between">
             <span className="text-muted-ink">Target Total:</span>
-            <span className="font-semibold font-data">{formatIDR(goal.targetAmount)}</span>
+            <span className="font-semibold font-data">{<PrivacyNumber value={goal.targetAmount} />}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-ink">Sudah Terkumpul:</span>
-            <span className="font-semibold text-income font-data">{formatIDR(goal.currentAmount)}</span>
+            <span className="font-semibold text-income font-data">{<PrivacyNumber value={goal.currentAmount} />}</span>
           </div>
           <div className="flex justify-between border-t border-black/5 pt-1">
             <span className="text-muted-ink">Sisa Dibutuhkan:</span>
-            <span className="font-bold text-primary font-data">{formatIDR(remainingNeeded)}</span>
+            <span className="font-bold text-primary font-data">{<PrivacyNumber value={remainingNeeded} />}</span>
           </div>
         </div>
 
@@ -99,7 +102,7 @@ export function DepositModal({ isOpen, onClose, goal }: DepositModalProps) {
               <Label className="mb-0">Nominal Setoran (Rp)</Label>
               {depositAmount > 0 && (
                 <span className="text-xs font-bold text-income font-data">
-                  +{formatIDR(depositAmount)}
+                  +{isP ? "•••••" : formatIDR(depositAmount)}
                 </span>
               )}
             </div>
@@ -127,7 +130,7 @@ export function DepositModal({ isOpen, onClose, goal }: DepositModalProps) {
                   onClick={() => handleAddPreset(val)}
                   className="rounded-full border border-black/10 bg-white/70 px-2.5 py-1 text-xs font-medium text-ink hover:bg-income/10 hover:border-income/40 hover:text-income transition"
                 >
-                  +{formatIDR(val).replace(",00", "")}
+                  +{isP ? "•••••" : formatIDR(val).replace(",00", "")}
                 </button>
               ))}
               {remainingNeeded > 0 && (

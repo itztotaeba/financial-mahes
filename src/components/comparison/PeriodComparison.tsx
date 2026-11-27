@@ -24,6 +24,8 @@ import {
 import { Card, Badge } from "@/components/ui/primitives";
 import { formatIDR, formatIDRCompact, todayISO, dateOnly } from "@/lib/utils";
 import { usePeriodComparison } from "@/lib/selectors";
+import { PrivacyNumber } from "@/components/PrivacyNumber";
+import { usePrivacy } from "@/contexts/PrivacyContext";
 
 interface PeriodComparisonProps {
   initialMonth?: string;
@@ -34,6 +36,7 @@ export function PeriodComparison({ initialMonth }: PeriodComparisonProps) {
     initialMonth || dateOnly(todayISO()).slice(0, 7)
   );
 
+  const { isPrivacyMode } = usePrivacy();
   const data = usePeriodComparison(selectedMonth);
   const {
     current,
@@ -89,7 +92,7 @@ export function PeriodComparison({ initialMonth }: PeriodComparisonProps) {
       return (
         <span className="inline-flex items-center gap-1 rounded-full bg-expense/15 px-2 py-0.5 text-xs font-bold text-expense">
           <ArrowUpRight size={13} />
-          +{formatIDR(diff)} (+{pct.toFixed(1)}%)
+          +{isPrivacyMode ? "•••••" : formatIDR(diff)} (+{pct.toFixed(1)}%)
         </span>
       );
     }
@@ -97,7 +100,7 @@ export function PeriodComparison({ initialMonth }: PeriodComparisonProps) {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-income/15 px-2 py-0.5 text-xs font-bold text-income">
         <ArrowDownRight size={13} />
-        {formatIDR(diff)} ({pct.toFixed(1)}%)
+        {isPrivacyMode ? "•••••" : formatIDR(diff)} ({pct.toFixed(1)}%)
       </span>
     );
   };
@@ -115,7 +118,7 @@ export function PeriodComparison({ initialMonth }: PeriodComparisonProps) {
       return (
         <span className="inline-flex items-center gap-1 rounded-full bg-income/15 px-2 py-0.5 text-xs font-bold text-income">
           <ArrowUpRight size={13} />
-          +{formatIDR(diff)} (+{pct.toFixed(1)}%)
+          +{isPrivacyMode ? "•••••" : formatIDR(diff)} (+{pct.toFixed(1)}%)
         </span>
       );
     }
@@ -123,7 +126,7 @@ export function PeriodComparison({ initialMonth }: PeriodComparisonProps) {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-expense/15 px-2 py-0.5 text-xs font-bold text-expense">
         <ArrowDownRight size={13} />
-        {formatIDR(diff)} ({pct.toFixed(1)}%)
+        {isPrivacyMode ? "•••••" : formatIDR(diff)} ({pct.toFixed(1)}%)
       </span>
     );
   };
@@ -142,14 +145,14 @@ export function PeriodComparison({ initialMonth }: PeriodComparisonProps) {
       return (
         <span className="inline-flex items-center gap-1 rounded-full bg-income/15 px-2 py-0.5 text-xs font-bold text-income">
           <ArrowUpRight size={13} />
-          +{formatIDR(diff)} (+{pct.toFixed(1)}%)
+          +{isPrivacyMode ? "•••••" : formatIDR(diff)} (+{pct.toFixed(1)}%)
         </span>
       );
     }
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-expense/15 px-2 py-0.5 text-xs font-bold text-expense">
         <ArrowDownRight size={13} />
-        {formatIDR(diff)} ({pct.toFixed(1)}%)
+        {isPrivacyMode ? "•••••" : formatIDR(diff)} ({pct.toFixed(1)}%)
       </span>
     );
   };
@@ -202,13 +205,13 @@ export function PeriodComparison({ initialMonth }: PeriodComparisonProps) {
               <div className="flex justify-between text-xs">
                 <span className="text-muted-ink">Pemasukan:</span>
                 <span className="font-bold text-income font-data">
-                  {formatIDR(current.income)}
+                  {<PrivacyNumber value={current.income} />}
                 </span>
               </div>
               <div className="flex justify-between text-xs">
                 <span className="text-muted-ink">Pengeluaran:</span>
                 <span className="font-bold text-expense font-data">
-                  {formatIDR(current.expense)}
+                  {<PrivacyNumber value={current.expense} />}
                 </span>
               </div>
               <div className="flex justify-between text-xs border-t border-black/5 pt-1">
@@ -218,7 +221,7 @@ export function PeriodComparison({ initialMonth }: PeriodComparisonProps) {
                     current.net >= 0 ? "text-income" : "text-expense"
                   }`}
                 >
-                  {formatIDR(current.net)}
+                  {<PrivacyNumber value={current.net} />}
                 </span>
               </div>
             </div>
@@ -238,13 +241,13 @@ export function PeriodComparison({ initialMonth }: PeriodComparisonProps) {
               <div className="flex justify-between text-xs">
                 <span className="text-muted-ink">Pemasukan:</span>
                 <span className="font-bold text-income font-data">
-                  {formatIDR(prevMonth.income)}
+                  {<PrivacyNumber value={prevMonth.income} />}
                 </span>
               </div>
               <div className="flex justify-between text-xs">
                 <span className="text-muted-ink">Pengeluaran:</span>
                 <span className="font-bold text-expense font-data">
-                  {formatIDR(prevMonth.expense)}
+                  {<PrivacyNumber value={prevMonth.expense} />}
                 </span>
               </div>
               <div className="flex justify-between text-xs border-t border-black/5 pt-1">
@@ -254,7 +257,7 @@ export function PeriodComparison({ initialMonth }: PeriodComparisonProps) {
                     prevMonth.net >= 0 ? "text-income" : "text-expense"
                   }`}
                 >
-                  {formatIDR(prevMonth.net)}
+                  {<PrivacyNumber value={prevMonth.net} />}
                 </span>
               </div>
             </div>
@@ -274,13 +277,13 @@ export function PeriodComparison({ initialMonth }: PeriodComparisonProps) {
               <div className="flex justify-between text-xs">
                 <span className="text-muted-ink">Pemasukan:</span>
                 <span className="font-bold text-income font-data">
-                  {formatIDR(sameMonthLastYear.income)}
+                  {<PrivacyNumber value={sameMonthLastYear.income} />}
                 </span>
               </div>
               <div className="flex justify-between text-xs">
                 <span className="text-muted-ink">Pengeluaran:</span>
                 <span className="font-bold text-expense font-data">
-                  {formatIDR(sameMonthLastYear.expense)}
+                  {<PrivacyNumber value={sameMonthLastYear.expense} />}
                 </span>
               </div>
               <div className="flex justify-between text-xs border-t border-black/5 pt-1">
@@ -290,7 +293,7 @@ export function PeriodComparison({ initialMonth }: PeriodComparisonProps) {
                     sameMonthLastYear.net >= 0 ? "text-income" : "text-expense"
                   }`}
                 >
-                  {formatIDR(sameMonthLastYear.net)}
+                  {<PrivacyNumber value={sameMonthLastYear.net} />}
                 </span>
               </div>
             </div>
@@ -325,7 +328,7 @@ export function PeriodComparison({ initialMonth }: PeriodComparisonProps) {
                 tickLine={false}
               />
               <YAxis
-                tickFormatter={(v: number) => formatIDRCompact(v)}
+                tickFormatter={(v: number) => (isPrivacyMode ? "•••" : formatIDRCompact(v))}
                 tick={{ fontSize: 11, fill: "#151516", opacity: 0.5, fontFamily: "var(--font-data)" }}
                 axisLine={false}
                 tickLine={false}
@@ -340,7 +343,7 @@ export function PeriodComparison({ initialMonth }: PeriodComparisonProps) {
                   fontSize: 12,
                   backdropFilter: "blur(12px)",
                 }}
-                formatter={(value) => formatIDR(Number(value))}
+                formatter={(value) => (isPrivacyMode ? "Rp •••••" : formatIDR(Number(value)))}
                 labelFormatter={(_, payload) =>
                   payload?.[0]?.payload?.fullLabel || ""
                 }
@@ -400,16 +403,16 @@ export function PeriodComparison({ initialMonth }: PeriodComparisonProps) {
                   Total Pemasukan
                 </td>
                 <td className="py-3.5 pr-3 text-right font-bold font-data text-income">
-                  {formatIDR(current.income)}
+                  {<PrivacyNumber value={current.income} />}
                 </td>
                 <td className="py-3.5 pr-3 text-right font-medium font-data text-muted-ink">
-                  {formatIDR(prevMonth.income)}
+                  {<PrivacyNumber value={prevMonth.income} />}
                 </td>
                 <td className="py-3.5 pr-3 text-right">
                   {renderIncomeChangeBadge(momIncomeDiff, momIncomePct)}
                 </td>
                 <td className="py-3.5 pr-3 text-right font-medium font-data text-muted-ink">
-                  {formatIDR(sameMonthLastYear.income)}
+                  {<PrivacyNumber value={sameMonthLastYear.income} />}
                 </td>
                 <td className="py-3.5 text-right">
                   {renderIncomeChangeBadge(yoyIncomeDiff, yoyIncomePct)}
@@ -423,16 +426,16 @@ export function PeriodComparison({ initialMonth }: PeriodComparisonProps) {
                   Total Pengeluaran
                 </td>
                 <td className="py-3.5 pr-3 text-right font-bold font-data text-expense">
-                  {formatIDR(current.expense)}
+                  {<PrivacyNumber value={current.expense} />}
                 </td>
                 <td className="py-3.5 pr-3 text-right font-medium font-data text-muted-ink">
-                  {formatIDR(prevMonth.expense)}
+                  {<PrivacyNumber value={prevMonth.expense} />}
                 </td>
                 <td className="py-3.5 pr-3 text-right">
                   {renderExpenseChangeBadge(momExpenseDiff, momExpensePct)}
                 </td>
                 <td className="py-3.5 pr-3 text-right font-medium font-data text-muted-ink">
-                  {formatIDR(sameMonthLastYear.expense)}
+                  {<PrivacyNumber value={sameMonthLastYear.expense} />}
                 </td>
                 <td className="py-3.5 text-right">
                   {renderExpenseChangeBadge(yoyExpenseDiff, yoyExpensePct)}
@@ -450,16 +453,16 @@ export function PeriodComparison({ initialMonth }: PeriodComparisonProps) {
                     current.net >= 0 ? "text-income" : "text-expense"
                   }`}
                 >
-                  {formatIDR(current.net)}
+                  {<PrivacyNumber value={current.net} />}
                 </td>
                 <td className="py-3.5 pr-3 text-right font-medium font-data text-muted-ink">
-                  {formatIDR(prevMonth.net)}
+                  {<PrivacyNumber value={prevMonth.net} />}
                 </td>
                 <td className="py-3.5 pr-3 text-right">
                   {renderNetChangeBadge(current.net, prevMonth.net)}
                 </td>
                 <td className="py-3.5 pr-3 text-right font-medium font-data text-muted-ink">
-                  {formatIDR(sameMonthLastYear.net)}
+                  {<PrivacyNumber value={sameMonthLastYear.net} />}
                 </td>
                 <td className="py-3.5 text-right">
                   {renderNetChangeBadge(current.net, sameMonthLastYear.net)}

@@ -15,6 +15,7 @@ import { useFinanceStore } from "@/store/useFinanceStore";
 import { localStorageHelpers } from "@/lib/storage";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { formatIDR } from "@/lib/utils";
+import { PrivacyNumber } from "@/components/PrivacyNumber";
 
 export default function PengaturanPage() {
   const hydrated = useFinanceStore((s) => s.hydrated);
@@ -85,7 +86,7 @@ export default function PengaturanPage() {
                   <span className="font-data">{transactions.length}</span> transaksi tersimpan di
                   browser · total{" "}
                   <span className="font-data font-semibold text-ink">
-                    {formatIDR(transactions.reduce((a, t) => a + t.amount, 0))}
+                    {<PrivacyNumber value={transactions.reduce((a, t) => a + t.amount, 0)} />}
                   </span>{" "}
                   dicatat.
                 </p>
