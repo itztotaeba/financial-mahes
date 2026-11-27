@@ -6,11 +6,15 @@
  */
 import { AlertTriangle, ShieldCheck } from "lucide-react";
 import { Card } from "@/components/ui/primitives";
-import { formatIDR } from "@/lib/utils";
+import { usePrivacy } from "@/contexts/PrivacyContext";
+import { PrivacyNumber } from "@/components/PrivacyNumber";
 import type { Summary } from "@/lib/selectors";
 
 export function RedFlagAlert({ summary }: { summary: Summary }) {
   const ratio = Math.min(summary.burnRatio, 1); // cap visual 100%
+  const { isPrivacyMode } = usePrivacy();
+  /** Rasio bakar ikut tersamar saat mode privasi (bukan sekadar angka persen). */
+  const burnPct = isPrivacyMode ? "•••" : `${(summary.burnRatio * 100).toFixed(0)}%`;
 
   if (summary.isRedFlag) {
     return (
@@ -23,13 +27,13 @@ export function RedFlagAlert({ summary }: { summary: Summary }) {
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-base font-bold text-expense">Red Flag! Pengeluaran terlalu tinggi</h2>
               <span className="rounded-full bg-expense px-2.5 py-0.5 text-xs font-bold text-white">
-                {(summary.burnRatio * 100).toFixed(0)}% dari pemasukan
+                {burnPct} dari pemasukan
               </span>
             </div>
             <p className="mt-1 text-sm text-ink/70">
               Bulan ini Anda menghabiskan{" "}
-              <b className="font-data text-expense">{formatIDR(summary.monthExpense)}</b> dari pemasukan{" "}
-              <b className="font-data text-income">{formatIDR(summary.monthIncome)}</b>. Idealnya pengeluaran
+              <b className="font-data text-expense"><PrivacyNumber value={summary.monthExpense} /></b> dari pemasukan{" "}
+              <b className="font-data text-income"><PrivacyNumber value={summary.monthIncome} /></b>. Idealnya pengeluaran
               di bawah 80% agar dana tetap bertumbuh.
             </p>
           </div>
@@ -48,7 +52,7 @@ export function RedFlagAlert({ summary }: { summary: Summary }) {
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-sm font-bold text-income">Kondisi keuangan sehat</h2>
             <span className="text-xs font-semibold text-muted-ink">
-              Rasio bakar bulan ini: {(summary.burnRatio * 100).toFixed(0)}%
+              Rasio bakar bulan ini: {burnPct}
             </span>
           </div>
           {/* Progress bar rasio pengeluaran:pemasukan */}

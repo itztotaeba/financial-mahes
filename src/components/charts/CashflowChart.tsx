@@ -2,6 +2,8 @@
 
 /**
  * Grafik Cashflow 30 hari terakhir (recharts): batang pemasukan vs pengeluaran.
+ * Saat mode privasi aktif, label sumbu Y dan nilai tooltip disamarkan menjadi
+ * "Rp •••••" — data grafik (bentuk batang) tidak diubah, hanya tampilan angkanya.
  */
 import {
   ResponsiveContainer,
@@ -14,10 +16,15 @@ import {
   Legend,
 } from "recharts";
 import { Card } from "@/components/ui/primitives";
-import { formatIDR, formatIDRCompact } from "@/lib/utils";
+import { formatIDR } from "@/lib/utils";
+import { usePrivacy } from "@/contexts/PrivacyContext";
 import type { DayPoint } from "@/lib/selectors";
 
+const PRIVACY_MASK = "Rp •••••";
+
 export function CashflowChart({ data }: { data: DayPoint[] }) {
+  const { isPrivacyMode } = usePrivacy();
+
   return (
     <Card className="h-full">
       <div className="mb-4 flex items-center justify-between">
@@ -43,7 +50,7 @@ export function CashflowChart({ data }: { data: DayPoint[] }) {
               minTickGap={24}
             />
             <YAxis
-              tickFormatter={(v: number) => formatIDRCompact(v)}
+              tickFormatter={(v: number) => (isPrivacyMode ? PRIVACY_MASK : formatIDR(v))}
               tick={{ fontSize: 11, fill: "#151516", opacity: 0.5, fontFamily: "var(--font-data)" }}
               axisLine={false}
               tickLine={false}
@@ -58,7 +65,7 @@ export function CashflowChart({ data }: { data: DayPoint[] }) {
                 fontSize: 12,
               }}
               formatter={(value, name) => [
-                formatIDR(Number(value)),
+                isPrivacyMode ? PRIVACY_MASK : formatIDR(Number(value)),
                 name === "income" ? "Pemasukan" : "Pengeluaran",
               ]}
               labelFormatter={(label) => `Tanggal ${String(label)}`}

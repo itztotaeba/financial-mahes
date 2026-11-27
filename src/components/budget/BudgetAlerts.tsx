@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { AlertTriangle, AlertCircle, ShieldAlert, ArrowRight, CheckCircle2 } from "lucide-react";
 import { Card, Badge, Button } from "@/components/ui/primitives";
-import { formatIDR } from "@/lib/utils";
+import { PrivacyNumber } from "@/components/PrivacyNumber";
 import type { BudgetStatus } from "@/types";
 import { useCategoryBudgets } from "@/lib/selectors";
 
@@ -75,9 +75,9 @@ export function BudgetAlerts({ compact = false, limit, month }: BudgetAlertsProp
                     </h4>
                     <p className="mt-1 text-xs text-ink/80 leading-relaxed">
                       Pengeluaran sudah mencapai{" "}
-                      <b className="font-data text-expense">{formatIDR(item.spentAmount)}</b> dari batas{" "}
-                      <b className="font-data text-ink">{formatIDR(item.budgetAmount)}</b>. Melebihi anggaran sebesar{" "}
-                      <b className="font-data text-expense">+{formatIDR(overAmount)}</b>.
+                      <b className="font-data text-expense"><PrivacyNumber value={item.spentAmount} /></b> dari batas{" "}
+                      <b className="font-data text-ink"><PrivacyNumber value={item.budgetAmount} /></b>. Melebihi anggaran sebesar{" "}
+                      <b className="font-data text-expense">+<PrivacyNumber value={overAmount} /></b>.
                     </p>
                   </div>
                 </div>
@@ -125,9 +125,9 @@ export function BudgetAlerts({ compact = false, limit, month }: BudgetAlertsProp
                     </h4>
                     <p className="mt-1 text-xs text-ink/80 leading-relaxed">
                       Pengeluaran mencapai{" "}
-                      <b className="font-data text-amber-700">{formatIDR(item.spentAmount)}</b> dari batas{" "}
-                      <b className="font-data text-ink">{formatIDR(item.budgetAmount)}</b>. Sisa anggaran hanya{" "}
-                      <b className="font-data text-ink font-semibold">{formatIDR(item.remainingAmount)}</b>.
+                      <b className="font-data text-amber-700"><PrivacyNumber value={item.spentAmount} /></b> dari batas{" "}
+                      <b className="font-data text-ink"><PrivacyNumber value={item.budgetAmount} /></b>. Sisa anggaran hanya{" "}
+                      <b className="font-data text-ink font-semibold"><PrivacyNumber value={item.remainingAmount} /></b>.
                     </p>
                   </div>
                 </div>
@@ -174,9 +174,9 @@ export function BudgetAlerts({ compact = false, limit, month }: BudgetAlertsProp
                   </div>
                   <p className="text-xs text-ink/80 mt-0.5">
                     Kategori <b>{item.categoryLabel}</b> terpakai{" "}
-                    <span className="font-data font-semibold text-yellow-700">{formatIDR(item.spentAmount)}</span> dari{" "}
-                    <span className="font-data">{formatIDR(item.budgetAmount)}</span> (sisa{" "}
-                    <span className="font-data font-medium">{formatIDR(item.remainingAmount)}</span>).
+                    <span className="font-data font-semibold text-yellow-700"><PrivacyNumber value={item.spentAmount} /></span> dari{" "}
+                    <span className="font-data"><PrivacyNumber value={item.budgetAmount} /></span> (sisa{" "}
+                    <span className="font-data font-medium"><PrivacyNumber value={item.remainingAmount} /></span>).
                   </p>
                 </div>
               </div>

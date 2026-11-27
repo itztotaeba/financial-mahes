@@ -12,7 +12,8 @@ import { TransactionItem } from "@/components/transaction/TransactionItem";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useFinanceStore } from "@/store/useFinanceStore";
 import { CATEGORY_MAP } from "@/types";
-import { cn, formatIDR, dateOnly } from "@/lib/utils";
+import { cn, dateOnly } from "@/lib/utils";
+import { PrivacyNumber } from "@/components/PrivacyNumber";
 
 type TypeFilter = "all" | "income" | "expense";
 
@@ -160,8 +161,8 @@ export default function TransaksiPage() {
 
             <p className="text-xs text-muted-ink">
               Menampilkan <b className="font-data">{filtered.length}</b> transaksi · Pemasukan{" "}
-              <b className="font-data text-income">{formatIDR(filteredTotals.income)}</b> · Pengeluaran{" "}
-              <b className="font-data text-expense">{formatIDR(filteredTotals.expense)}</b>
+              <b className="font-data text-income"><PrivacyNumber value={filteredTotals.income} /></b> · Pengeluaran{" "}
+              <b className="font-data text-expense"><PrivacyNumber value={filteredTotals.expense} /></b>
             </p>
           </Card>
 

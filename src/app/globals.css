@@ -210,3 +210,18 @@ body {
     background: rgba(21, 21, 22, 0.15);
   }
 }
+
+/* Animasi toggle privasi — transisi halus pergantian ikon 👁️/🙈. */
+@keyframes privacy-toggle-in {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.animate-privacy-toggle {
+  animation: privacy-toggle-in 0.2s ease-out;
+}
